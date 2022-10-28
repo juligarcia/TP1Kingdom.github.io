@@ -1,14 +1,14 @@
-class Animated {
-  constructor(initialValues, finalValues, easing, duration, setter, onFinish) {
+class AnimatedPhysics {
+  constructor(initialValues, physics, isFinished, setter, onFinish) {
     this.initialValues = initialValues;
-    this.finalValues = finalValues;
     this.values = initialValues;
     this.playing = false;
-    this.finished = false;
     this.start = null;
-    this.easing = easing;
+    this.physics = physics;
     this.setter = setter;
-    this.duration = duration;
+    this.isFinished = isFinished;
+    this.finished = false;
+    this.stopped = false;
     this.onFinish = onFinish;
   }
 
@@ -28,7 +28,6 @@ class Animated {
   play() {
     window.requestAnimationFrame(() => {
       const values = this.values;
-      const finalValues = this.finalValues;
       const initialValues = this.initialValues;
 
       if (this.stopped) {
@@ -42,14 +41,7 @@ class Animated {
 
       if (!this.start) this.start = new Date();
 
-      const finished = Object.keys(values).every((key) => {
-        const error = Math.abs(
-          (finalValues[key] - values[key]) /
-            Math.max(finalValues[key], values[key])
-        );
-
-        return error <= 0.01;
-      });
+      const finished = this.isFinished(initialValues, values);
 
       if (finished) {
         this.playing = false;
@@ -59,19 +51,7 @@ class Animated {
       }
       const elapsed = Date.now() - this.start.getTime();
 
-      const newValues = {};
-
-      Object.keys(values).forEach((key) => {
-        const from = initialValues[key];
-        const to = finalValues[key];
-
-        if (to < from)
-          newValues[key] =
-            (1 - this.easing(elapsed / this.duration)) * (from - to) + to;
-        else
-          newValues[key] =
-            this.easing(elapsed / this.duration) * (to - from) + from;
-      });
+      const newValues = this.physics(elapsed, initialValues);
 
       this.values = newValues;
       this.setter(newValues);

@@ -8,6 +8,7 @@
     <script src="myJS/shapes/world.js"></script>
     <script src="myJS/circular.js"></script>
     <script src="myJS/animation/animated.js"></script>
+    <script src="myJS/animation/animated-physics.js"></script>
     <script src="myJS/animation/easing-functions.js"></script>
     <script src="myJS/shapes/castle/castle.js"></script>
     <script src="myJS/shapes/castle/gate.js"></script>
@@ -44,8 +45,6 @@
 </head>
 
 <body>
-    <button id="button">hola</button>
-
     <canvas id="myCanvas">
         Your browser does not support the HTML5 canvas element.
     </canvas>
@@ -54,6 +53,8 @@
     <script>
         //VARIABLES DE GUI
         var openGate = 0;
+        var rotateCatapultY = 0;
+        var rotateCatapultX = 0;
 
         var gl;
         var mat4 = glMatrix.mat4;
@@ -61,7 +62,7 @@
         var vec3 = glMatrix.vec3;
         var vec4 = glMatrix.vec4;
 
-        var center = "catapult";
+        var cameraTarget = "catapult";
 
         var liftBridge = 0;
         var vertexShaderFile = "vertex-shader.glsl";
@@ -84,12 +85,6 @@
         var matrizVista = mat4.create();
         var matrizModelado = mat4.create();
 
-        var catapultShotAnimation = {};
-
-        const catapultAnimator = new Animated({ angle: 0 }, { angle: Math.PI / 2 }, easingFunctions["easeInOut"], 5, "catapultShotAnimation");
-
-        catapultAnimator.play();
-
         const camera = new DragCamera();
 
         const world = new World();
@@ -106,9 +101,7 @@
 
         const catapultNode = new Catapult();
 
-        catapultNode.setTranslation([0, 0, 25]).setRotation([0, Math.PI / 2, 0]);
-
-        var catapultCenter = catapultNode.getCenter();
+        var catapultCenter = vec3.create();
 
         worldNode
             .addChildren(
@@ -119,7 +112,11 @@
             )
             .transform(sceneTransform);
 
-
+        window.addEventListener("keydown", (e) => {
+            if (e.key === " ") {
+                catapultNode.fire();
+            }
+        });
 
         function initGL(canvas) {
 
@@ -272,11 +269,10 @@
                 catapult: catapultCenter
             };
 
-            matrizVista = camera.buildLookAt(TARGETS[center]);
+            matrizVista = camera.buildLookAt(TARGETS[cameraTarget]);
 
             castleNode.openGate(openGate);
             castleNode.liftBridge(liftBridge);
-
 
             var lightPosition = [10.0, 0.0, 3.0];
             gl.uniform3fv(shaderProgram.lightingDirectionUniform, lightPosition);
@@ -289,7 +285,14 @@
             requestAnimFrame(tick);
             time += 1 / 60;
 
-            // console.log(catapultShotAnimation);
+            catapultNode.setTranslation([
+                25 * Math.cos(2 * Math.PI * rotateCatapultX),
+                0,
+                25 * Math.sin(2 * Math.PI * rotateCatapultX)
+            ]);
+            catapultNode.setRotation([0, rotateCatapultY + Math.PI / 2 - 2 * Math.PI * rotateCatapultX, 0]);
+            catapultNode.update();
+            catapultCenter = catapultNode.getCenter();
 
             camera.update();
             drawScene();
@@ -298,9 +301,11 @@
         function initMenu() {
             var gui = new dat.GUI();
             gui.add(window, "openGate", 0, 0.5).step(0.01);
+            gui.add(window, "rotateCatapultY", -Math.PI / 4, Math.PI / 4).step(0.001);
+            gui.add(window, "rotateCatapultX", 0, 1).step(0.01);
             gui.add(window, "liftBridge", 0, 0.8).step(0.01);
             gui.add(window, "modo", ["wireframe", "smooth", "edges"]);
-            gui.add(window, "center", ["center", "catapult"]);
+            gui.add(window, "cameraTarget", ["center", "catapult"]);
         }
 
         function webGLStart() {

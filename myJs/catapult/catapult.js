@@ -9,7 +9,70 @@ class Catapult extends Node3D {
     this.wheelWidth = 0.2;
     this.wheelRadius = 0.5;
 
-    this.children = [...this.buildWheels(), this.buildBase(), this.buildArm()];
+    this.armNode = this.buildArm().setTranslation([0, 2.5, 0]);
+
+    this.children = [...this.buildWheels(), this.buildBase(), this.armNode];
+
+    this.boulderAnimatedValues = { height: 5.5, vx: 25, span: 0.5 };
+    this.animatedValues = {};
+
+    this.armAnimator = new Animated(
+      { angle: 0 },
+      { angle: Math.PI / 2 },
+      easingFunctions["easeInOut"],
+      300,
+      (values) => {
+        this.animatedValues = values;
+      },
+      () => {
+        this.boulderAnimator.play();
+      }
+    );
+
+    this.boulderAnimator = new AnimatedPhysics(
+      { height: 5.5, vx: 25, span: 0.5 },
+      (elapsed, initialValues) => {
+        return {
+          vx: initialValues.vx,
+          span: initialValues.span + (initialValues.vx * elapsed) / 1000,
+          height: initialValues.height - 4.9 * Math.pow(elapsed / 1000, 2)
+        };
+      },
+      (_, currentValues) => currentValues.height <= -3,
+      (values) => {
+        this.boulderAnimatedValues = values;
+      },
+      () => {
+        this.boulderAnimatedValues = { height: 5.5, vx: 25, span: 0.5 };
+        this.animatedValues = {};
+
+        this.armAnimator.reset();
+        this.boulderAnimator.reset();
+      }
+    );
+  }
+
+  fire() {
+    if (
+      this.armAnimator.playing ||
+      this.boulderAnimator.playing ||
+      (this.armAnimator.finished && this.boulderAnimator.finished)
+    ) {
+      this.boulderAnimatedValues = { height: 5.5, vx: 25, span: 0.5 };
+      this.animatedValues = {};
+
+      this.armAnimator.stop();
+      this.boulderAnimator.stop();
+    } else this.armAnimator.play();
+  }
+
+  update() {
+    this.armNode.rotX = -this.animatedValues.angle || 0;
+    this.boulderNode.setTranslation([
+      0,
+      this.boulderAnimatedValues.span,
+      this.boulderAnimatedValues.height
+    ]);
   }
 
   buildBase() {
@@ -182,9 +245,9 @@ class Catapult extends Node3D {
     ];
 
     const supportPathCP = [
-      [0, 2.5, -1.5],
-      [0, 2.5, -1.5],
-      [0, 2.5, 3.5]
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 5]
     ];
 
     const supportShape = new JointBezier(3, supportShapeCP, "xy").build(20);
@@ -217,9 +280,9 @@ class Catapult extends Node3D {
     ];
 
     const paddlePathCP = [
-      [0, 2.5, 3.5],
-      [0, 2.5, 3.5],
-      [0, 2.5, 4.5]
+      [0, 0, 5],
+      [0, 0, 5],
+      [0, 0, 6]
     ];
 
     const paddleShape = new JointBezier(3, paddleShapeCP, "xy").build(20);
@@ -229,9 +292,11 @@ class Catapult extends Node3D {
       new Node3D(new SweepSurface(paddleShape, paddlePath, true))
     );
 
-    armNode.addChildren(
-      new Node3D(new Sphere(0.5)).setTranslation([0, 3, 4])
-    );
+    this.boulderNode = new Node3D(new Sphere(0.5)).setTranslation([
+      0, 0.5, 5.5
+    ]);
+
+    armNode.addChildren(this.boulderNode);
 
     return armNode;
   }

@@ -58,8 +58,6 @@ class SweepSurface {
 
     vec3.scale(center, center, 1 / this.path.length);
 
-    console.log({ center });
-
     return center;
   }
 

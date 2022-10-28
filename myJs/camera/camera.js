@@ -5,7 +5,7 @@ class DragCamera {
 
     this.mouseDown = false;
 
-    this.deltaScroll = -200;
+    this.deltaScroll = 100;
 
     this.scrollingUp = false;
     this.scrollingDown = false;

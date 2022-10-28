@@ -2,7 +2,7 @@ class Node3D {
   constructor(model = null) {
     this.model = model;
     this.transformMatrix = mat4.create();
-    this.parentTransform = mat4.create();
+    this.parent = null;
 
     this.rotX = 0;
     this.rotY = 0;
@@ -34,7 +34,7 @@ class Node3D {
   addChildren(...children) {
     this.children = this.children.concat(children);
 
-    children.forEach((child) => (child.parentTransform = this.transformMatrix));
+    children.forEach((child) => (child.parent = this));
 
     return this;
   }
@@ -48,15 +48,15 @@ class Node3D {
   getInitialTransform() {
     const initialTransform = mat4.create();
 
-    mat4.rotateX(initialTransform, initialTransform, this.rotX);
-    mat4.rotateY(initialTransform, initialTransform, this.rotY);
-    mat4.rotateZ(initialTransform, initialTransform, this.rotZ);
-
     mat4.translate(initialTransform, initialTransform, [
       this.trX,
       this.trY,
       this.trZ
     ]);
+
+    mat4.rotateX(initialTransform, initialTransform, this.rotX);
+    mat4.rotateY(initialTransform, initialTransform, this.rotY);
+    mat4.rotateZ(initialTransform, initialTransform, this.rotZ);
 
     return initialTransform;
   }
@@ -86,15 +86,16 @@ class Node3D {
   getCenter() {
     let center = vec3.create();
 
-    const initialTransform = this.getInitialTransform();
-    const transformMatrix = mat4.clone(this.transformMatrix);
+    const m = mat4.create();
 
-    mat4.mul(transformMatrix, this.parentTransform, transformMatrix);
-    mat4.mul(transformMatrix, transformMatrix, initialTransform);
+    if (this.parent) mat4.mul(m, m, this.parent.transformMatrix);
+
+    mat4.mul(m, m, this.getInitialTransform());
+    mat4.mul(m, m, this.transformMatrix);
 
     center = vec4.fromValues(...center, 1);
 
-    vec4.transformMat4(center, center, transformMatrix);
+    vec4.transformMat4(center, center, m);
 
     return [center[0], center[1], center[2]];
   }
