@@ -38,10 +38,10 @@ class Castle extends Node3D {
       ).generateSurface(20, 50)
     );
 
-    const bridge = new Bridge(5);
+    const bridge = new Bridge(7);
 
     const bridgeTransform = mat4.create();
-    mat4.translate(bridgeTransform, bridgeTransform, [12, 0, 0]);
+    mat4.translate(bridgeTransform, bridgeTransform, [14, 0, 0]);
 
     const bridgeNode = new Node3D(bridge.generateSurface(20, 20));
 

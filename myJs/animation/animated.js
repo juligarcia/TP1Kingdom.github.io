@@ -1,57 +1,66 @@
 class Animated {
-  constructor(
-    initialValues,
-    finalValues,
-    easing,
-    duration,
-    eventConfiguration
-  ) {
+  constructor(initialValues, finalValues, easing, duration, variable) {
     this.initialValues = initialValues;
     this.finalValues = finalValues;
     this.values = initialValues;
     this.playing = false;
     this.start = null;
+    this.easing = easing;
+    this.variable = variable;
+    this.duration = duration;
+  }
 
-    const element = document.getElementById(eventConfiguration.id);
+  stop() {
+    this.playing = false;
+  }
 
-    element.addEventListener(eventConfiguration.event, () => {
-      window.requestAnimationFrame(() => {
-        if (this.playing) {
-          this.playing = false;
-          return;
-        }
+  play() {
+    window.requestAnimationFrame(() => {
+      const values = this.values;
+      const finalValues = this.finalValues;
+      const initialValues = this.initialValues;
+      this;
 
-        if (!start) this.start = new Date();
+      if (this.playing) {
+        this.playing = false;
+        return;
+      }
 
-        const finished = Object.keys(values).every((key) => {
-          const error = Math.abs(
-            (finalValues[key] - values[key]) /
-              Math.max(finalValues[key], values[key])
-          );
+      if (!this.start) this.start = new Date();
 
-          error <= 0.01;
-        });
+      const finished = Object.keys(values).every((key) => {
+        const error = Math.abs(
+          (finalValues[key] - values[key]) /
+            Math.max(finalValues[key], values[key])
+        );
 
-        if (finished) {
-          this.playing = false;
-          return;
-        }
-        const elapsed = Date.now() - this.start.getTime();
-
-        const newValues = {};
-
-        Object.keys(values).forEach((key) => {
-          const from = initialValues[key];
-          const to = finalValues[key];
-
-          if (to < from)
-            newValues[key] =
-              (1 - easing(elapsed / duration)) * (from - to) + to;
-          else newValues[key] = easing(elapsed / duration) * (to - from) + from;
-        });
-
-        this.values = newValues;
+        return error <= 0.01;
       });
+
+      if (finished) {
+        this.playing = false;
+        return;
+      }
+      const elapsed = Date.now() - this.start.getTime();
+
+      const newValues = {};
+
+      Object.keys(values).forEach((key) => {
+        const from = initialValues[key];
+        const to = finalValues[key];
+
+        if (to < from)
+          newValues[key] =
+            (1 - this.easing(elapsed / this.duration)) * (from - to) + to;
+        else
+          newValues[key] =
+            this.easing(elapsed / this.duration) * (to - from) + from;
+      });
+
+      this.values = newValues;
+      window[this.variable] = newValues;
+
+      this.play();
     });
   }
 }

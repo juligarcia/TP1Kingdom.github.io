@@ -13,7 +13,7 @@ class Circular extends Path {
         this.radius * Math.sin(2 * Math.PI * u)
       ]
     );
-
+1
     return this.rotate(point);
   }
 
@@ -30,7 +30,7 @@ class Circular extends Path {
 
   tangent(u) {
     let tangent = vec3.fromValues(
-      ...[-Math.sin(2 * Math.PI * u), 0, Math.cos(2 * Math.PI * u)]
+      ...[Math.sin(2 * Math.PI * u), 0, Math.cos(2 * Math.PI * u)]
     );
 
     tangent = this.rotate(tangent);

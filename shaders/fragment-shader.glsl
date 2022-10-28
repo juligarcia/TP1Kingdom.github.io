@@ -24,9 +24,9 @@
            color.z=0.0;
 
 
-//         color.x=normalize(vNormal).x *0.5 + 0.5;
-//         color.y=normalize(vNormal).y *0.5 + 0.5;
-//         color.z=normalize(vNormal).z*0.5 + 0.5;
+        color.x=normalize(vNormal).x *0.5 + 0.5;
+        color.y=normalize(vNormal).y *0.5 + 0.5;
+        color.z=normalize(vNormal).z*0.5 + 0.5;
            
             if (uUseLighting)
                 gl_FragColor = vec4(color,1.0);

@@ -74,7 +74,7 @@ class Walls {
       vec4.scale(
         xAxis,
         xAxis,
-        this.distanceToTower - 2 * this.width - this.towerWidth
+        this.distanceToTower
       );
 
       return [xAxis[0], xAxis[1], xAxis[2]];

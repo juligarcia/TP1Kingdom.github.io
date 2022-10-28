@@ -5,7 +5,7 @@ class DragCamera {
 
     this.mouseDown = false;
 
-    this.deltaScroll = 600;
+    this.deltaScroll = -200;
 
     this.scrollingUp = false;
     this.scrollingDown = false;
@@ -13,15 +13,23 @@ class DragCamera {
     this.dragX = 110;
     this.dragY = 60;
 
+    this.enabled = true;
+
     this.observer = { x: 0, y: 0, z: 0 };
 
+    this.UI = null;
+
     window.addEventListener("mousedown", ({ clientX: x, clientY: y }) => {
+      if (!this.enabled) return;
+
       this.mouseDown = true;
       this.anchor = { x, y };
       this.dragPosition = { x, y };
     });
 
     window.addEventListener("mouseup", () => {
+      if (!this.enabled) return;
+
       this.mouseDown = false;
       this.dragX += this.dragPosition.x - this.anchor.x;
       this.dragY += this.dragPosition.y - this.anchor.y;
@@ -30,21 +38,45 @@ class DragCamera {
     });
 
     window.addEventListener("mousemove", ({ clientX: x, clientY: y }) => {
+      if (!this.enabled) return;
+
       if (this.mouseDown) {
         this.dragPosition = { x, y };
       }
     });
 
     window.addEventListener("wheel", ({ deltaY }) => {
+      if (!this.enabled) return;
+
       this.scrollingDown = deltaY > 0;
       this.scrollingUp = deltaY < 0;
       this.deltaScroll += deltaY;
-
-      this.deltaScroll = Math.max(this.deltaScroll, 0);
     });
   }
 
+  setGUIListener() {
+    if (this.UI) return;
+
+    const UI = document.getElementsByClassName("dg main a")?.[0];
+
+    if (!UI) return;
+
+    UI.addEventListener("mouseover", () => {
+      this.enabled = false;
+    });
+
+    UI.addEventListener("mouseleave", () => {
+      this.enabled = true;
+    });
+
+    this.UI = UI;
+  }
+
   update() {
+    this.setGUIListener();
+
+    if (!this.enabled) return;
+
     const dragX = this.dragX + (this.dragPosition.x - this.anchor.x);
     const dragY = this.dragY + (this.dragPosition.y - this.anchor.y);
 

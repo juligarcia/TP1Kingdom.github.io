@@ -119,6 +119,29 @@ class Node3D {
     normalBuffer = normalBuffer.flat();
     uvBuffer = uvBuffer.flat();
 
+    if (surface.closed) {
+      const startingLid = surface.getStartingLid(cols + 1, m);
+      const endingLid = surface.getEndingLid(cols + 1, m);
+
+      positionBuffer = [...startingLid[0], ...positionBuffer, ...endingLid[0]];
+      normalBuffer = [...startingLid[1], ...normalBuffer, ...endingLid[1]];
+
+      rows += 2;
+
+      uvBuffer = [];
+
+      for (let i = 0; i <= rows; i++) {
+        for (let j = 0; j <= cols; j++) {
+          const u = j / cols;
+          const v = i / rows;
+
+          uvBuffer.push([u, v]);
+        }
+      }
+
+      uvBuffer = uvBuffer.flat();
+    }
+
     let indexBuffer = [];
 
     for (let i = 0; i < rows; i++) {
@@ -137,8 +160,6 @@ class Node3D {
     }
 
     indexBuffer = indexBuffer.flat();
-
-    // Creación e Inicialización de los buffers
 
     const webglPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, webglPositionBuffer);

@@ -44,6 +44,7 @@
 </head>
 
 <body>
+    <button id="button">hola</button>
 
     <canvas id="myCanvas">
         Your browser does not support the HTML5 canvas element.
@@ -60,7 +61,7 @@
         var vec3 = glMatrix.vec3;
         var vec4 = glMatrix.vec4;
 
-        var center = "center";
+        var center = "catapult";
 
         var liftBridge = 0;
         var vertexShaderFile = "vertex-shader.glsl";
@@ -74,10 +75,6 @@
         var $canvas = $("#myCanvas");
         var aspect = $canvas.width() / $canvas.height();
 
-        var distanciaCamara = 50;
-        var alturaCamara = 22;
-        var velocidadAngular = 0;
-
         var lighting = "true";
 
         var vertexShaderSource;
@@ -86,6 +83,12 @@
         var matrizProyeccion = mat4.create();
         var matrizVista = mat4.create();
         var matrizModelado = mat4.create();
+
+        var catapultShotAnimation = {};
+
+        const catapultAnimator = new Animated({ angle: 0 }, { angle: Math.PI / 2 }, easingFunctions["easeInOut"], 5, "catapultShotAnimation");
+
+        catapultAnimator.play();
 
         const camera = new DragCamera();
 
@@ -286,6 +289,8 @@
             requestAnimFrame(tick);
             time += 1 / 60;
 
+            // console.log(catapultShotAnimation);
+
             camera.update();
             drawScene();
         }
@@ -294,13 +299,8 @@
             var gui = new dat.GUI();
             gui.add(window, "openGate", 0, 0.5).step(0.01);
             gui.add(window, "liftBridge", 0, 0.8).step(0.01);
-            gui.add(window, "distanciaCamara", 0.01, 200).step(0.01);
-            gui.add(window, "alturaCamara", 0, 30).step(0.01);;
             gui.add(window, "modo", ["wireframe", "smooth", "edges"]);
             gui.add(window, "center", ["center", "catapult"]);
-            gui.add(window, "velocidadAngular", 0, 1).step(0.01);
-
-
         }
 
         function webGLStart() {

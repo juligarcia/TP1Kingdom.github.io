@@ -35,7 +35,7 @@ class Gate extends Node3D {
     const axis = vec3.create();
     vec3.sub(axis, vec3.fromValues(...tower2), vec3.fromValues(...tower1));
 
-    this.distanceBetweenTowers = vec3.len(axis) / 2;
+    this.distanceBetweenTowers = vec3.len(axis);
 
     this.wallLength = this.distanceBetweenTowers / 3;
 
@@ -52,14 +52,14 @@ class Gate extends Node3D {
     const wall2Transform = mat4.create();
 
     mat4.translate(wall2Transform, wall2Transform, [
-      vec3.len(axis) - this.wallLength * 2,
+      vec3.len(axis) - this.wallLength,
       0,
       0
     ]);
 
     const doorTransform = mat4.create();
 
-    mat4.translate(doorTransform, doorTransform, [this.wallLength * 2, 0, 0]);
+    mat4.translate(doorTransform, doorTransform, [this.wallLength, 0, 0]);
 
     this.doorNode = new Node3D(this.generateDoorSurface(20, 20)).transform(
       doorTransform
@@ -100,7 +100,7 @@ class Gate extends Node3D {
 
     const shape = new JointBezier(3, shapeControlsPoints).build(rows);
 
-    const shape3D = new SweepSurface(shape, path);
+    const shape3D = new SweepSurface(shape, path, true);
 
     return shape3D;
   }
@@ -166,7 +166,7 @@ class Gate extends Node3D {
 
     const shape = new JointBezier(2, shapeControlsPoints).build(rows);
 
-    const shape3D = new SweepSurface(shape, path);
+    const shape3D = new SweepSurface(shape, path, true);
 
     return shape3D;
   }
