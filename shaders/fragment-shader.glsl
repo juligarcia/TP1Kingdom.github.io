@@ -10,6 +10,8 @@
         uniform vec3 uLightPosition;        // posición de la luz
         
         uniform bool uUseLighting;          // usar iluminacion si/no
+        uniform bool normalMap;
+        uniform vec3 objectsColor;
 
         uniform sampler2D uSampler;
 
@@ -19,14 +21,17 @@
             
             vec3 color=(uAmbientColor+uDirectionalColor*max(dot(vNormal,lightDirection), 0.0));
            
-           color.x=vUv.x;
-           color.y=vUv.y;
-           color.z=0.0;
+           color.x=normalize(objectsColor).x;
+           color.y=normalize(objectsColor).y;
+           color.z=normalize(objectsColor).z;
 
+           color=(normalize(objectsColor)+uAmbientColor*0.2-uDirectionalColor*max(dot(vNormal,lightDirection), 0.0));
 
-        color.x=normalize(vNormal).x *0.5 + 0.5;
-        color.y=normalize(vNormal).y *0.5 + 0.5;
-        color.z=normalize(vNormal).z*0.5 + 0.5;
+        if(normalMap){
+            color.x=normalize(vNormal).x *0.5 + 0.5;
+            color.y=normalize(vNormal).y *0.5 + 0.5;
+            color.z=normalize(vNormal).z*0.5 + 0.5;
+        }
            
             if (uUseLighting)
                 gl_FragColor = vec4(color,1.0);

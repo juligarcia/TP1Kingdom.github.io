@@ -4,6 +4,8 @@ class Node3D {
     this.transformMatrix = mat4.create();
     this.parent = null;
 
+    this.color = null;
+
     this.rotX = 0;
     this.rotY = 0;
     this.rotZ = 0;
@@ -13,6 +15,12 @@ class Node3D {
     this.trZ = 0;
 
     this.children = [];
+  }
+
+  setColor(RGB) {
+    this.color = RGB;
+
+    return this;
   }
 
   setRotation(rotations) {
@@ -34,7 +42,9 @@ class Node3D {
   addChildren(...children) {
     this.children = this.children.concat(children);
 
-    children.forEach((child) => (child.parent = this));
+    children.forEach((child) => {
+      child.parent = this;
+    });
 
     return this;
   }
@@ -206,8 +216,21 @@ class Node3D {
     };
   }
 
+  getParentColor() {
+    if (this.parent) {
+      const color = this.parent?.color;
+
+      if (color) return color;
+
+      return this.parent.getParentColor();
+    }
+  }
+
   drawSelf(mesh) {
-    // Se configuran los buffers que alimentaron el pipeline
+    gl.uniform1i(shaderProgram.useLightingUniform, false);
+
+    gl.uniform3f(shaderProgram.objectsColor, ...vec3.fromValues(1, 1, 1));
+
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.webglPositionBuffer);
     gl.vertexAttribPointer(
       shaderProgram.vertexPositionAttribute,
@@ -240,11 +263,15 @@ class Node3D {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.webglIndexBuffer);
 
-    if (modo != "wireframe") {
-      gl.uniform1i(shaderProgram.useLightingUniform, lighting == "true");
-      /*
-              Aqui es necesario modificar la primitiva por triangle_strip
-          */
+    if (modo !== "wireframe") {
+      gl.uniform1i(shaderProgram.useLightingUniform, true);
+
+      gl.uniform3f(
+        shaderProgram.objectsColor,
+        ...(this.color || this.getParentColor() || vec3.create())
+      );
+
+      // gl.uniform1i(shaderProgram.useLightingUniform, lighting == "true");
       gl.drawElements(
         gl.TRIANGLES,
         mesh.webglIndexBuffer.numItems,
@@ -253,8 +280,8 @@ class Node3D {
       );
     }
 
-    if (modo != "smooth") {
-      gl.uniform1i(shaderProgram.useLightingUniform, false);
+    if (modo !== "smooth" && modo !== "normalMap") {
+      // gl.uniform1i(shaderProgram.useLightingUniform, false);
       gl.drawElements(
         gl.LINE_STRIP,
         mesh.webglIndexBuffer.numItems,

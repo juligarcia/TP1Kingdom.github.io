@@ -66,9 +66,11 @@ class Gate extends Node3D {
     );
 
     this.children = [
-      new Node3D(this.generateWallSurface(20, 20)),
-      new Node3D(this.generateWallSurface(20, 20)).transform(wall2Transform),
-      this.doorNode
+      new Node3D(this.generateWallSurface(20, 20)).setColor([99, 100, 101]),
+      new Node3D(this.generateWallSurface(20, 20))
+        .transform(wall2Transform)
+        .setColor([99, 100, 101]),
+      this.doorNode.setColor([172, 133, 62])
     ];
   }
 

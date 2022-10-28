@@ -2,6 +2,8 @@ class Catapult extends Node3D {
   constructor() {
     super();
 
+    this.setColor([172, 133, 62]);
+
     this.width = 2;
     this.depth = 4;
     this.heigth = 0.5;
@@ -11,9 +13,13 @@ class Catapult extends Node3D {
 
     this.armNode = this.buildArm().setTranslation([0, 2.5, 0]);
 
-    this.children = [...this.buildWheels(), this.buildBase(), this.armNode];
+    this.addChildren(
+      new Node3D().addChildren(...this.buildWheels()).setColor([206, 206, 209]),
+      this.buildBase(),
+      this.armNode
+    );
 
-    this.boulderAnimatedValues = { height: 5.5, vx: 25, span: 0.5 };
+    this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
     this.animatedValues = {};
 
     this.armAnimator = new Animated(
@@ -30,20 +36,23 @@ class Catapult extends Node3D {
     );
 
     this.boulderAnimator = new AnimatedPhysics(
-      { height: 5.5, vx: 25, span: 0.5 },
+      { height: 4, vx: 20, span: 0.5, vy: 0 },
       (elapsed, initialValues) => {
         return {
           vx: initialValues.vx,
           span: initialValues.span + (initialValues.vx * elapsed) / 1000,
-          height: initialValues.height - 4.9 * Math.pow(elapsed / 1000, 2)
+          height:
+            initialValues.height +
+            initialValues.vy * (elapsed / 1000) -
+            4.9 * Math.pow(elapsed / 1000, 2)
         };
       },
-      (_, currentValues) => currentValues.height <= -3,
+      (_, currentValues) => currentValues.height <= -4,
       (values) => {
         this.boulderAnimatedValues = values;
       },
       () => {
-        this.boulderAnimatedValues = { height: 5.5, vx: 25, span: 0.5 };
+        this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
         this.animatedValues = {};
 
         this.armAnimator.reset();
@@ -58,7 +67,7 @@ class Catapult extends Node3D {
       this.boulderAnimator.playing ||
       (this.armAnimator.finished && this.boulderAnimator.finished)
     ) {
-      this.boulderAnimatedValues = { height: 5.5, vx: 25, span: 0.5 };
+      this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
       this.animatedValues = {};
 
       this.armAnimator.stop();
@@ -68,11 +77,15 @@ class Catapult extends Node3D {
 
   update() {
     this.armNode.rotX = -this.animatedValues.angle || 0;
-    this.boulderNode.setTranslation([
-      0,
-      this.boulderAnimatedValues.span,
-      this.boulderAnimatedValues.height
-    ]);
+
+    this.boulderNode
+      .setTranslation([
+        0,
+        this.boulderAnimatedValues.span,
+        this.boulderAnimatedValues.height
+      ])
+      .setRotation([this.animatedValues.angle || 0, 0, 0])
+      .setColor([99, 100, 101]);
   }
 
   buildBase() {
@@ -173,6 +186,88 @@ class Catapult extends Node3D {
     return baseNode;
   }
 
+  buildCounterWeight() {
+    const weight = new Node3D();
+
+    const weightShapeCP = [
+      [-0.25, -0.25, 0],
+      [-0.25, -0.25, 0],
+      [-0.25, 0.25, 0],
+      [-0.25, 0.25, 0],
+
+      [-0.25, 0.25, 0],
+      [-0.25, 0.25, 0],
+      [0.25, 0.25, 0],
+      [0.25, 0.25, 0],
+
+      [0.25, 0.25, 0],
+      [0.25, 0.25, 0],
+      [0.25, -0.25, 0],
+      [0.25, -0.25, 0],
+
+      [0.25, -0.25, 0],
+      [0.25, -0.25, 0],
+      [-0.25, -0.25, 0],
+      [-0.25, -0.25, 0]
+    ];
+
+    const weightPathCP = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0.5, 0]
+    ];
+
+    const weightShape = new JointBezier(3, weightShapeCP, "xy").build(20);
+    const weightPath = new Bezier(weightPathCP, "xy").build(20);
+
+    const weigthNode = new Node3D(
+      new SweepSurface(weightShape, weightPath, true)
+    )
+      .setTranslation([0, -1, -1.5])
+      .setColor([99, 100, 101]);
+
+    weight.addChildren(weigthNode);
+
+    const supportShapeCP = [
+      [-0.1, -0.1, 0],
+      [-0.1, -0.1, 0],
+      [-0.1, 0.1, 0],
+      [-0.1, 0.1, 0],
+
+      [-0.1, 0.1, 0],
+      [-0.1, 0.1, 0],
+      [0.1, 0.1, 0],
+      [0.1, 0.1, 0],
+
+      [0.1, 0.1, 0],
+      [0.1, 0.1, 0],
+      [0.1, -0.1, 0],
+      [0.1, -0.1, 0],
+
+      [0.1, -0.1, 0],
+      [0.1, -0.1, 0],
+      [-0.1, -0.1, 0],
+      [-0.1, -0.1, 0]
+    ];
+
+    const supportPathCP = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0.6, 0]
+    ];
+
+    const supportShape = new JointBezier(3, supportShapeCP, "xy").build(20);
+    const supportWeightPath = new Bezier(supportPathCP, "xy").build(20);
+
+    const supportNode = new Node3D(
+      new SweepSurface(supportShape, supportWeightPath, true)
+    ).setTranslation([0, -0.5, -1.5]);
+
+    weight.addChildren(supportNode);
+
+    return weight;
+  }
+
   buildWheels() {
     const shape = new Circular("xy", this.wheelRadius).build(20);
 
@@ -190,6 +285,7 @@ class Catapult extends Node3D {
 
     wheels[0].trX = -this.width / 2 - this.wheelWidth / 2;
     wheels[0].trZ = this.depth / 2;
+
     wheels[2].trX = -this.width / 2 - this.wheelWidth / 2;
     wheels[2].trZ = -this.depth / 2;
 
@@ -254,7 +350,9 @@ class Catapult extends Node3D {
     const supportPath = new Bezier(supportPathCP, "xz").build(20);
 
     armNode.addChildren(
-      new Node3D(new SweepSurface(supportShape, supportPath, true))
+      new Node3D(
+        new SweepSurface(supportShape, supportPath, true)
+      ).setTranslation([0, 0, -1.5])
     );
 
     const paddleShapeCP = [
@@ -289,14 +387,18 @@ class Catapult extends Node3D {
     const paddlePath = new Bezier(paddlePathCP, "xz").build(20);
 
     armNode.addChildren(
-      new Node3D(new SweepSurface(paddleShape, paddlePath, true))
+      new Node3D(
+        new SweepSurface(paddleShape, paddlePath, true)
+      ).setTranslation([0, 0, -1.5])
     );
 
-    this.boulderNode = new Node3D(new Sphere(0.5)).setTranslation([
-      0, 0.5, 5.5
-    ]);
+    this.boulderNode = new Node3D(new Sphere(0.5));
 
     armNode.addChildren(this.boulderNode);
+
+    this.counterWeight = this.buildCounterWeight();
+
+    armNode.addChildren(this.counterWeight);
 
     return armNode;
   }
@@ -305,7 +407,8 @@ class Catapult extends Node3D {
 class Sphere {
   constructor(radius) {
     this.radius = radius;
-    (this.pointsPerLevel = 20), (this.levels = 20);
+    this.pointsPerLevel = 20;
+    this.levels = 20;
   }
 
   getPosition(u, v, m) {
@@ -323,9 +426,9 @@ class Sphere {
 
   getNormal(u, v, m) {
     const position = vec3.fromValues(
-      this.radius * Math.cos(2 * Math.PI * u) * Math.sin(Math.PI * v),
-      this.radius * Math.sin(2 * Math.PI * u) * Math.sin(Math.PI * v),
-      this.radius * Math.cos(Math.PI * v)
+      Math.cos(2 * Math.PI * u) * Math.sin(Math.PI * v),
+      Math.sin(2 * Math.PI * u) * Math.sin(Math.PI * v),
+      Math.cos(Math.PI * v)
     );
 
     let normal = vec4.fromValues(...position, 0);

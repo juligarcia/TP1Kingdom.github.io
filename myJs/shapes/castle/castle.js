@@ -7,6 +7,8 @@ class Castle extends Node3D {
     const castleTransform = mat4.create();
     mat4.rotateY(castleTransform, castleTransform, Math.PI / numberOfTowers);
 
+    this.setColor([99, 100, 101]);
+
     const towers = new Array(numberOfTowers)
       .fill(0)
       .map(
@@ -58,12 +60,11 @@ class Castle extends Node3D {
 
     this.gateNode = gate;
 
-    this.children = [
-      new Node3D()
-        .transform(castleTransform)
-        .addChildren(...towers, walls, gate),
-      bridgeNode
-    ];
+    this.castleNode = new Node3D()
+      .transform(castleTransform)
+      .addChildren(...towers, walls, gate);
+
+    this.addChildren(bridgeNode.setColor([172, 133, 62]), this.castleNode);
   }
 
   openGate(open) {
