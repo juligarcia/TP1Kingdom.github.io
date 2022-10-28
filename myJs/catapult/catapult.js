@@ -328,9 +328,15 @@ class Sphere {
       this.radius * Math.cos(Math.PI * v)
     );
 
-    vec3.normalize(position, position);
+    let normal = vec4.fromValues(...position, 0);
 
-    return [position[0], position[1], position[2]];
+    vec4.transformMat4(normal, normal, m);
+
+    normal = vec4.fromValues(...normal);
+
+    vec3.normalize(normal, normal);
+
+    return [normal[0], normal[1], normal[2]];
   }
 
   getTextureCoordiantes(u, v) {
