@@ -137,8 +137,8 @@ class Node3D {
     uvBuffer = uvBuffer.flat();
 
     if (surface.closed) {
-      const startingLid = surface.getStartingLid(cols + 1, m);
-      const endingLid = surface.getEndingLid(cols + 1, m);
+      const startingLid = surface?.getStartingLid(cols + 1, m) || [];
+      const endingLid = surface?.getEndingLid(cols + 1, m) || [];
 
       positionBuffer = [...startingLid[0], ...positionBuffer, ...endingLid[0]];
       normalBuffer = [...startingLid[1], ...normalBuffer, ...endingLid[1]];

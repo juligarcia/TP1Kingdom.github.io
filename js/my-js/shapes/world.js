@@ -9,8 +9,15 @@ class World extends Node3D {
       new Node3D(this.buildCastleTerrain()).setColor([20, 128, 70]),
       new Node3D(this.buildTerrain())
         .setColor([20, 128, 70])
-        .transform(terrainTransform)
+        .transform(terrainTransform),
+      new Node3D(this.buildPitWater())
+        .setTranslation([0, -2, 0])
+        .setColor([0, 153, 255])
     ];
+  }
+
+  buildPitWater() {
+    return new Plane(50, 50);
   }
 
   buildCastleTerrain() {
@@ -44,7 +51,11 @@ class World extends Node3D {
 
       [20, 0, 0],
       [20, 0, 0],
-      [45, 0, 0]
+      [45, 0, 0],
+
+      [45, 0, 0],
+      [45, 0, 0],
+      [45, -3, 0]
     ];
 
     const path = new Circular().build(10);
@@ -53,5 +64,36 @@ class World extends Node3D {
     const shape3D = new SweepSurface(shape, path);
 
     return shape3D;
+  }
+}
+
+class Plane {
+  constructor(width, depth) {
+    this.width = width;
+    this.depth = depth;
+    this.levels = 20;
+    this.pointsPerLevel = 20;
+  }
+
+  getPosition(u, v, m) {
+    const x = (u - 0.5) * this.width;
+    const z = (v - 0.5) * this.depth;
+
+    const position = vec4.fromValues(x, 0, z, 1);
+
+    vec4.transformMat4(position, position, m);
+
+    return [position[0], position[1], position[2]];
+  }
+
+  getNormal(u, v, m) {
+    const normal = vec4.fromValues(0, 1, 0, 0);
+
+    vec4.transformMat4(normal, normal, m);
+    return [normal[0], normal[1], normal[2]];
+  }
+
+  getTextureCoordiantes(u, v) {
+    return [u, v];
   }
 }
