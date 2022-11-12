@@ -119,7 +119,7 @@ class Catapult extends Node3D {
       [0, this.wheelRadius, this.depth / 2 + 0.2]
     ];
 
-    const path = new JointBezier(2, pathControlPoints, "xz").build(20);
+    const path = new Bezier(pathControlPoints, "xz").build(20);
 
     const shape = new JointBezier(3, shapeControlsPoints).build(20);
 
@@ -291,8 +291,13 @@ class Catapult extends Node3D {
 
     wheels[1].trX = this.width / 2 + this.wheelWidth / 2;
     wheels[1].trZ = this.depth / 2;
+    wheels[1].trY = this.wheelRadius * 2;
+    wheels[1].rotZ = Math.PI;
+
     wheels[3].trX = this.width / 2 + this.wheelWidth / 2;
     wheels[3].trZ = -this.depth / 2;
+    wheels[3].trY = this.wheelRadius * 2;
+    wheels[3].rotZ = Math.PI;
 
     const axisShape = new Circular("xy", this.wheelRadius / 10).build(20);
 

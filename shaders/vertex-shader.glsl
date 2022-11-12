@@ -32,12 +32,10 @@
         const float PI=3.141592653;
 
         void main(void) {
-                    
             vec3 position = aPosition;		
             vec3 normal = aNormal;	
-            vec2 uv = aUv;
-                                   	
-           vec4 textureColor = texture2D(uSampler, vec2(uv.s, uv.t));         
+            vec2 uv = aUv;                       	
+            vec4 textureColor = texture2D(uSampler, vec2(uv.s, uv.t));         
 
             vec4 worldPos = uMMatrix*vec4(position, 1.0);                        
 

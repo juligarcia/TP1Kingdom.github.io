@@ -1,5 +1,6 @@
 class Path {
-  constructor(plane = "xy") {
+  constructor(plane = "xy", closed) {
+    this.closed = closed;
     this.cross =
       plane === "xz" ? vec3.fromValues(0, 1, 0) : vec3.fromValues(0, 0, -1);
   }
@@ -8,11 +9,15 @@ class Path {
     const eval1 = this.eval(u);
     const invert = u === 1;
     const deltaT = invert ? -2 * delta : delta;
-    const eval2 = this.eval(u + deltaT);
+
+    let eval2 = null;
+
+    if (this.closed) eval2 = this.eval(delta);
+    else eval2 = this.eval(u + deltaT);
 
     const tangent = vec3.create();
 
-    if (invert) vec3.sub(tangent, eval1, eval2);
+    if (invert && !this.closed) vec3.sub(tangent, eval1, eval2);
     else vec3.sub(tangent, eval2, eval1);
 
     vec3.normalize(tangent, tangent);

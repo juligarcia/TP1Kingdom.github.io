@@ -1,6 +1,7 @@
 <!doctype html>
 
 <head>
+    <script src="./js/my-js/shapes/gl-node.js"></script>
     <script src="./js/my-js/camera/camera.js"></script>
     <script src="./js/my-js/shapes/node-3d.js"></script>
     <script src="./js/my-js/path.js"></script>
@@ -39,6 +40,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
+            background-color: red;
         }
     </style>
 
@@ -145,7 +147,7 @@
 
             function loadFS() {
                 return $.ajax({
-                    url: "shaders/fragment-shader.glsl",
+                    url: "shaders/phong/fragment.glsl",
                     success: function (result) {
                         fragmentShaderSource = result;
                     }
@@ -187,12 +189,14 @@
 
         function initShaders() {
 
-            var fragmentShader = getShader(gl, vertexShaderSource, "vertex");
-            var vertexShader = getShader(gl, fragmentShaderSource, "fragment");
+            var vertexShader = getShader(gl, vertexShaderSource, "vertex");
+            var fragmentShader = getShader(gl, fragmentShaderSource, "fragment");
 
             shaderProgram = gl.createProgram();
+
             gl.attachShader(shaderProgram, vertexShader);
             gl.attachShader(shaderProgram, fragmentShader);
+
             gl.linkProgram(shaderProgram);
 
             if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
@@ -222,6 +226,19 @@
             shaderProgram.frameUniform = gl.getUniformLocation(shaderProgram, "time");
             shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightPosition");
             shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
+
+            // Inicializo las variables uniformes necesarias para Phong en los shaders
+
+            shaderProgram.kd = gl.getUniformLocation(shaderProgram, "kd");
+            shaderProgram.ks = gl.getUniformLocation(shaderProgram, "ks");
+            shaderProgram.ka = gl.getUniformLocation(shaderProgram, "ka");
+
+            shaderProgram.shininess = gl.getUniformLocation(shaderProgram, "shininess");
+
+            shaderProgram.ambientColor = gl.getUniformLocation(shaderProgram, "ambientColor");
+            shaderProgram.specularColor = gl.getUniformLocation(shaderProgram, "specularColor");
+            shaderProgram.diffuseColor = gl.getUniformLocation(shaderProgram, "diffuseColor");
+
         }
 
 
@@ -232,7 +249,7 @@
             gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, matrizProyeccion);
 
             var normalMatrix = mat3.create();
-            mat3.fromMat4(normalMatrix, matrizModelado); // normalMatrix= (inversa(traspuesta(matrizModelado)));
+            mat3.fromMat4(normalMatrix, matrizModelado);
 
             mat3.invert(normalMatrix, normalMatrix);
             mat3.transpose(normalMatrix, normalMatrix);
@@ -271,7 +288,7 @@
             castleNode.openGate(openGate);
             castleNode.liftBridge(liftBridge);
 
-            var lightPosition = [10.0, 0.0, 3.0];
+            var lightPosition = [300.0, 300.0, 0.0];
             gl.uniform3fv(shaderProgram.lightingDirectionUniform, lightPosition);
 
             setMatrixUniforms();

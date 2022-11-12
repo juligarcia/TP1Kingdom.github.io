@@ -4,6 +4,8 @@ class Node3D {
     this.transformMatrix = mat4.create();
     this.parent = null;
 
+    this.glNode = new GLNode();
+
     this.color = null;
 
     this.rotX = 0;
@@ -15,6 +17,10 @@ class Node3D {
     this.trZ = 0;
 
     this.children = [];
+  }
+
+  normalizeColor(color) {
+    return color.map((element) => element / 255);
   }
 
   setColor(RGB) {
@@ -83,8 +89,8 @@ class Node3D {
       const mesh = this.buildMesh(
         this.model,
         transformMatrix,
-        this.model.pointsPerLevel,
-        this.model.levels
+        this.model.levels,
+        this.model.pointsPerLevel
       );
 
       this.drawSelf(mesh);
@@ -137,7 +143,7 @@ class Node3D {
       positionBuffer = [...startingLid[0], ...positionBuffer, ...endingLid[0]];
       normalBuffer = [...startingLid[1], ...normalBuffer, ...endingLid[1]];
 
-      rows += 2;
+      rows += 4;
 
       uvBuffer = [];
 
@@ -171,6 +177,11 @@ class Node3D {
     }
 
     indexBuffer = indexBuffer.flat();
+
+    // const webglPositionBuffer = this.glNode.createBuffer(positionBuffer, 3);
+    // const webglNormalBuffer = this.glNode.createBuffer(normalBuffer, 3);
+    // const webglUvsBuffer = this.glNode.createBuffer(uvBuffer, 2);
+    // const webglIndexBuffer = this.glNode.createBuffer(indexBuffer, 1);
 
     const webglPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, webglPositionBuffer);
@@ -263,31 +274,55 @@ class Node3D {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.webglIndexBuffer);
 
-    if (modo !== "wireframe") {
-      gl.uniform1i(shaderProgram.useLightingUniform, true);
+    // if (modo !== "wireframe") {
+    gl.uniform1i(shaderProgram.useLightingUniform, true);
 
-      gl.uniform3f(
-        shaderProgram.objectsColor,
-        ...(this.color || this.getParentColor() || vec3.create())
-      );
+    // esto despues de aplicar phong lo podria sacar
+    gl.uniform3f(
+      shaderProgram.objectsColor,
+      ...(this.color || this.getParentColor() || vec3.create())
+    );
 
-      // gl.uniform1i(shaderProgram.useLightingUniform, lighting == "true");
-      gl.drawElements(
-        gl.TRIANGLES,
-        mesh.webglIndexBuffer.numItems,
-        gl.UNSIGNED_SHORT,
-        0
-      );
-    }
+    // ---
 
-    if (modo !== "smooth" && modo !== "normalMap") {
-      // gl.uniform1i(shaderProgram.useLightingUniform, false);
-      gl.drawElements(
-        gl.LINE_STRIP,
-        mesh.webglIndexBuffer.numItems,
-        gl.UNSIGNED_SHORT,
-        0
-      );
-    }
+    gl.uniform1f(shaderProgram.ks, 0.2);
+    gl.uniform1f(shaderProgram.kd, 1);
+    gl.uniform1f(shaderProgram.ka, 1);
+    gl.uniform1f(shaderProgram.shininess, 0.2);
+
+    gl.uniform3f(
+      shaderProgram.diffuseColor,
+      ...this.normalizeColor(
+        this.color || this.getParentColor() || vec3.create()
+      )
+    );
+
+    gl.uniform3f(
+      shaderProgram.ambientColor,
+      ...this.normalizeColor([10, 0, 10])
+    );
+
+    gl.uniform3f(
+      shaderProgram.specularColor,
+      ...this.normalizeColor([242, 212, 87])
+      // ...this.normalizeColor([255, 255, 255])
+    );
+
+    gl.drawElements(
+      gl.TRIANGLES,
+      mesh.webglIndexBuffer.numItems,
+      gl.UNSIGNED_SHORT,
+      0
+    );
+    // }
+
+    // if (modo !== "smooth" && modo !== "normalMap") {
+    //   gl.drawElements(
+    //     gl.LINE_STRIP,
+    //     mesh.webglIndexBuffer.numItems,
+    //     gl.UNSIGNED_SHORT,
+    //     0
+    //   );
+    // }
   }
 }

@@ -1,6 +1,6 @@
 class Bezier extends Path {
-  constructor(controlPoints, plane) {
-    super(plane);
+  constructor(controlPoints, plane, closed) {
+    super(plane, closed);
 
     this.controlPoints = controlPoints.map((point) =>
       vec3.fromValues(...point)

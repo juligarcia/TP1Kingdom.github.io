@@ -11,34 +11,23 @@ class SweepSurface {
 
   getStartingLid(cols, m) {
     const center = vec4.fromValues(...this.path[0].point, 1);
+    const normalMat = this.path[0].normal;
 
     vec4.transformMat4(center, center, m);
 
-    const normal = mat4.fromValues(...this.path[0].normal);
+    const shape = this.shape.map(({ point }) => {
+      const p = vec4.fromValues(...point, 1);
+      vec4.transformMat4(p, p, normalMat);
+      vec4.transformMat4(p, p, m);
 
-    mat4.mul(normal, normal, m);
+      return [...vec3.fromValues(...p)];
+    });
 
-    const tangent = vec3.fromValues(normal[8], normal[9], normal[10]);
-    mat4.rotate(normal, normal, Math.PI / 2, tangent);
+    let tangent = vec4.fromValues(normalMat[8], normalMat[9], normalMat[10], 0);
 
-    const points = new Array(cols)
-      .fill(0)
-      .map(() => [...vec3.fromValues(...center)]);
+    vec4.transformMat4(tangent, tangent, m);
 
-    const normals = new Array(cols).fill(0).map(() => [...tangent]);
-
-    return [points.flat(), normals.flat()];
-  }
-
-  getEndingLid(cols, m) {
-    const center = vec4.fromValues(...this.path[this.path.length - 1].point, 1);
-
-    vec4.transformMat4(center, center, m);
-
-    const normal = mat4.fromValues(...this.path[this.path.length - 1].normal);
-
-    const tangent = vec3.fromValues(normal[8], normal[9], normal[10]);
-    mat4.rotate(normal, normal, -Math.PI / 2, tangent);
+    tangent = vec3.fromValues(...tangent);
 
     vec3.negate(tangent, tangent);
 
@@ -46,9 +35,46 @@ class SweepSurface {
       .fill(0)
       .map(() => [...vec3.fromValues(...center)]);
 
+    const normals = new Array(cols)
+      .fill(0)
+      .map(() => [...vec3.fromValues(...tangent)]);
+
+    return [
+      [...points.flat(), ...shape.flat()],
+      [...normals.flat(), ...normals.flat()]
+    ];
+  }
+
+  getEndingLid(cols, m) {
+    const center = vec4.fromValues(...this.path[this.path.length - 1].point, 1);
+    const normalMat = this.path[this.path.length - 1].normal;
+
+    vec4.transformMat4(center, center, m);
+
+    const shape = this.shape.map(({ point }) => {
+      const p = vec4.fromValues(...point, 1);
+      vec4.transformMat4(p, p, normalMat);
+      vec4.transformMat4(p, p, m);
+
+      return [...vec3.fromValues(...p)];
+    });
+
+    let tangent = vec4.fromValues(normalMat[8], normalMat[9], normalMat[10], 0);
+
+    vec4.transformMat4(tangent, tangent, m);
+
+    tangent = vec3.fromValues(...tangent);
+
+    const points = new Array(cols)
+      .fill(0)
+      .map(() => [...vec3.fromValues(...center)]);
+
     const normals = new Array(cols).fill(0).map(() => [...tangent]);
 
-    return [points.flat(), normals.flat()];
+    return [
+      [...shape.flat(), ...points.flat()],
+      [...normals.flat(), ...normals.flat()]
+    ];
   }
 
   getCenter() {
