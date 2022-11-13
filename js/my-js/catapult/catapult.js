@@ -16,7 +16,7 @@ class Catapult extends Node3D {
     this.addChildren(
       new Node3D().addChildren(...this.buildWheels()).setColor([206, 206, 209]),
       this.buildBase(),
-      this.armNode
+      this.armNode,
     );
 
     this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
@@ -85,7 +85,6 @@ class Catapult extends Node3D {
         this.boulderAnimatedValues.height
       ])
       .setRotation([this.animatedValues.angle || 0, 0, 0])
-      .setColor([99, 100, 101]);
   }
 
   buildBase() {
@@ -397,7 +396,12 @@ class Catapult extends Node3D {
       ).setTranslation([0, 0, -1.5])
     );
 
-    this.boulderNode = new Node3D(new Sphere(0.5));
+    this.boulderNode = new PointLight(
+      [0, 0, 0],
+      [0, 0, 0],
+      [255, 197, 78],
+      0.5
+    );
 
     armNode.addChildren(this.boulderNode);
 

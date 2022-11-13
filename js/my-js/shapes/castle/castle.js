@@ -64,7 +64,12 @@ class Castle extends Node3D {
       .transform(castleTransform)
       .addChildren(...towers, walls, gate);
 
-    this.addChildren(bridgeNode.setColor([172, 133, 62]), this.castleNode);
+    this.addChildren(
+      bridgeNode.setColor([172, 133, 62]),
+      this.castleNode,
+      new PointLight([12, 2, 5], [10, 0, 10], [255, 197, 78]),
+      new PointLight([12, 2, -5], [10, 0, 10], [255, 197, 78])
+    );
   }
 
   openGate(open) {

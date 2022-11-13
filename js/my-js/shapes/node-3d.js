@@ -3,6 +3,7 @@ class Node3D {
     this.model = model;
     this.transformMatrix = mat4.create();
     this.parent = null;
+    this.isLightSource = false;
 
     this.glNode = new GLNode();
 
@@ -21,6 +22,11 @@ class Node3D {
 
   normalizeColor(color) {
     return color.map((element) => element / 255);
+  }
+
+  preRender() {
+    const ls = gl.getUniformLocation(shaderProgram, "isLightSource");
+    gl.uniform1i(ls, this.isLightSource);
   }
 
   setColor(RGB) {
@@ -78,12 +84,18 @@ class Node3D {
   }
 
   draw(parentTransform = mat4.create()) {
+    this.preRender();
+
     const initialTransform = this.getInitialTransform();
 
     const transformMatrix = mat4.clone(this.transformMatrix);
 
     mat4.mul(transformMatrix, parentTransform, transformMatrix);
     mat4.mul(transformMatrix, transformMatrix, initialTransform);
+
+    if (this.isLightSource) {
+      this.init(transformMatrix);
+    }
 
     if (this.model) {
       const mesh = this.buildMesh(
@@ -277,35 +289,15 @@ class Node3D {
     // if (modo !== "wireframe") {
     gl.uniform1i(shaderProgram.useLightingUniform, true);
 
-    // esto despues de aplicar phong lo podria sacar
-    gl.uniform3f(
-      shaderProgram.objectsColor,
-      ...(this.color || this.getParentColor() || vec3.create())
-    );
-
-    // ---
-
-    gl.uniform1f(shaderProgram.ks, 0.2);
-    gl.uniform1f(shaderProgram.kd, 1);
+    gl.uniform1f(shaderProgram.ks, 0.1);
+    gl.uniform1f(shaderProgram.kd, 0.2);
     gl.uniform1f(shaderProgram.ka, 1);
-    gl.uniform1f(shaderProgram.shininess, 0.2);
-
+    gl.uniform1f(shaderProgram.shininess, 0.1);
     gl.uniform3f(
-      shaderProgram.diffuseColor,
+      shaderProgram.materialColor,
       ...this.normalizeColor(
         this.color || this.getParentColor() || vec3.create()
       )
-    );
-
-    gl.uniform3f(
-      shaderProgram.ambientColor,
-      ...this.normalizeColor([10, 0, 10])
-    );
-
-    gl.uniform3f(
-      shaderProgram.specularColor,
-      ...this.normalizeColor([242, 212, 87])
-      // ...this.normalizeColor([255, 255, 255])
     );
 
     gl.drawElements(
