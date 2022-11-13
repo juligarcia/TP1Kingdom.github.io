@@ -8,8 +8,7 @@ class Node3D {
     this.glNode = new GLNode();
 
     this.color = null;
-
-    this.rotX = 0;
+    this.material = this.rotX = 0;
     this.rotY = 0;
     this.rotZ = 0;
 
@@ -18,10 +17,10 @@ class Node3D {
     this.trZ = 0;
 
     this.children = [];
-  }
 
-  normalizeColor(color) {
-    return color.map((element) => element / 255);
+    this.firstRender = true;
+    this.shouldRecalculate = false;
+    this.buffers = null;
   }
 
   preRender() {
@@ -31,6 +30,12 @@ class Node3D {
 
   setColor(RGB) {
     this.color = RGB;
+
+    return this;
+  }
+
+  setMaterial(material) {
+    this.material = material;
 
     return this;
   }
@@ -62,6 +67,8 @@ class Node3D {
   }
 
   transform(m) {
+    this.shouldRecalculate = true;
+
     mat4.multiply(this.transformMatrix, this.transformMatrix, m);
 
     return this;
@@ -128,7 +135,18 @@ class Node3D {
     return [center[0], center[1], center[2]];
   }
 
+  recalculate(should) {
+    if (should) {
+      this.shouldRecalculate = should;
+      this.children.forEach((child) => child.recalculate(should));
+    }
+  }
+
   buildMesh(surface, m, rows, cols) {
+    if (this.firstRender) this.firstRender = false;
+    else if (this.shouldRecalculate) this.shouldRecalculate = false;
+    else return this.buffers;
+
     let positionBuffer = [];
     let normalBuffer = [];
     let uvBuffer = [];
@@ -190,10 +208,29 @@ class Node3D {
 
     indexBuffer = indexBuffer.flat();
 
-    // const webglPositionBuffer = this.glNode.createBuffer(positionBuffer, 3);
-    // const webglNormalBuffer = this.glNode.createBuffer(normalBuffer, 3);
-    // const webglUvsBuffer = this.glNode.createBuffer(uvBuffer, 2);
-    // const webglIndexBuffer = this.glNode.createBuffer(indexBuffer, 1);
+    // const webglPositionBuffer = this.glNode.createBuffer(
+    //   new Float32Array(positionBuffer),
+    //   gl.ARRAY_BUFFER,
+    //   3
+    // );
+
+    // const webglNormalBuffer = this.glNode.createBuffer(
+    //   new Float32Array(normalBuffer),
+    //   gl.ARRAY_BUFFER,
+    //   3
+    // );
+
+    // const webglUvsBuffer = this.glNode.createBuffer(
+    //   new Float32Array(uvBuffer),
+    //   gl.ARRAY_BUFFER,
+    //   2
+    // );
+
+    // const webglIndexBuffer = this.glNode.createBuffer(
+    //   new Uint16Array(indexBuffer),
+    //   gl.ELEMENT_ARRAY_BUFFER,
+    //   1
+    // );
 
     const webglPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, webglPositionBuffer);
@@ -231,22 +268,19 @@ class Node3D {
     webglIndexBuffer.itemSize = 1;
     webglIndexBuffer.numItems = indexBuffer.length;
 
-    return {
+    this.buffers = {
       webglPositionBuffer,
       webglNormalBuffer,
       webglUvsBuffer,
       webglIndexBuffer
     };
+
+    return this.buffers;
   }
 
-  getParentColor() {
-    if (this.parent) {
-      const color = this.parent?.color;
-
-      if (color) return color;
-
-      return this.parent.getParentColor();
-    }
+  getMaterial() {
+    if (this.material) return this.material;
+    if (this.parent) return this.parent.material || this.parent.getMaterial();
   }
 
   drawSelf(mesh) {
@@ -289,16 +323,9 @@ class Node3D {
     // if (modo !== "wireframe") {
     gl.uniform1i(shaderProgram.useLightingUniform, true);
 
-    gl.uniform1f(shaderProgram.ks, 0.1);
-    gl.uniform1f(shaderProgram.kd, 0.2);
-    gl.uniform1f(shaderProgram.ka, 1);
-    gl.uniform1f(shaderProgram.shininess, 0.1);
-    gl.uniform3f(
-      shaderProgram.materialColor,
-      ...this.normalizeColor(
-        this.color || this.getParentColor() || vec3.create()
-      )
-    );
+    const material = this.getMaterial();
+
+    if (material) material.setGLColors(this.color);
 
     gl.drawElements(
       gl.TRIANGLES,
@@ -316,5 +343,60 @@ class Node3D {
     //     0
     //   );
     // }
+  }
+}
+
+class Material {
+  constructor(ka, kd, ks, shininess, color) {
+    this.ka = ka;
+    this.kd = kd;
+    this.ks = ks;
+    this.shininess = shininess;
+    this.color = color;
+  }
+
+  normalizeColor(color) {
+    return color.map((element) => element / 255);
+  }
+
+  setGLColors(replaceColor) {
+    gl.uniform1f(shaderProgram.ks, this.ks);
+    gl.uniform1f(shaderProgram.kd, this.kd);
+    gl.uniform1f(shaderProgram.ka, this.ka);
+    gl.uniform1f(shaderProgram.shininess, this.shininess);
+    gl.uniform3f(
+      shaderProgram.materialColor,
+      ...this.normalizeColor(replaceColor || this.color)
+    );
+  }
+}
+
+class Stone extends Material {
+  constructor(color) {
+    super(0.1, 0.5, 0.1, 1, color);
+  }
+}
+
+class Wood extends Material {
+  constructor(color) {
+    super(0.1, 0.7, 0.1, 0.1, color);
+  }
+}
+
+class Water extends Material {
+  constructor(color) {
+    super(0.1, 0.7, 0.5, 1.0, color);
+  }
+}
+
+class Grass extends Material {
+  constructor(color) {
+    super(0.1, 0.7, 0.0, 0.1, color);
+  }
+}
+
+class LightEmiter extends Material {
+  constructor(color) {
+    super(0.0, 1.0, 0.0, 0.1, color);
   }
 }

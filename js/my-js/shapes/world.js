@@ -5,15 +5,15 @@ class World extends Node3D {
     const terrainTransform = mat4.create();
     mat4.rotateY(terrainTransform, terrainTransform, -Math.PI / 10);
 
-    this.children = [
-      new Node3D(this.buildCastleTerrain()).setColor([20, 128, 70]),
-      new Node3D(this.buildTerrain())
-        .setColor([20, 128, 70])
-        .transform(terrainTransform),
+    this.setMaterial(new Grass([51, 204, 51]));
+
+    this.addChildren(
+      new Node3D(this.buildCastleTerrain()),
+      new Node3D(this.buildTerrain()).transform(terrainTransform),
       new Node3D(this.buildPitWater())
-        .setTranslation([0, -2, 0])
-        .setColor([0, 153, 255])
-    ];
+        .setTranslation([0, -1, 0])
+        .setMaterial(new Water([0, 153, 255]))
+    );
   }
 
   buildPitWater() {

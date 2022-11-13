@@ -2,7 +2,7 @@ class Catapult extends Node3D {
   constructor() {
     super();
 
-    this.setColor([172, 133, 62]);
+    this.setMaterial(new Wood([172, 133, 62]));
 
     this.width = 2;
     this.depth = 4;
@@ -14,19 +14,28 @@ class Catapult extends Node3D {
     this.armNode = this.buildArm().setTranslation([0, 2.5, 0]);
 
     this.addChildren(
-      new Node3D().addChildren(...this.buildWheels()).setColor([206, 206, 209]),
+      new Node3D()
+        .addChildren(...this.buildWheels())
+        .setMaterial(new Stone([217, 217, 217])),
       this.buildBase(),
-      this.armNode,
+      this.armNode
     );
 
-    this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
+    this.initialAnimationValues = {
+      height: 4,
+      vx: ((Math.PI / 3) * 0.5) / 0.03,
+      span: 0.5,
+      vy: 0
+    };
+
+    this.boulderAnimatedValues = this.initialAnimationValues;
     this.animatedValues = {};
 
     this.armAnimator = new Animated(
       { angle: 0 },
-      { angle: Math.PI / 2 },
+      { angle: Math.PI / 3 },
       easingFunctions["easeInOut"],
-      300,
+      200,
       (values) => {
         this.animatedValues = values;
       },
@@ -36,7 +45,7 @@ class Catapult extends Node3D {
     );
 
     this.boulderAnimator = new AnimatedPhysics(
-      { height: 4, vx: 20, span: 0.5, vy: 0 },
+      this.initialAnimationValues,
       (elapsed, initialValues) => {
         return {
           vx: initialValues.vx,
@@ -44,15 +53,15 @@ class Catapult extends Node3D {
           height:
             initialValues.height +
             initialValues.vy * (elapsed / 1000) -
-            4.9 * Math.pow(elapsed / 1000, 2)
+            10 * Math.pow(elapsed / 1000, 2)
         };
       },
-      (_, currentValues) => currentValues.height <= -4,
+      (_, currentValues) => currentValues.height <= -40,
       (values) => {
         this.boulderAnimatedValues = values;
       },
       () => {
-        this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
+        this.boulderAnimatedValues = this.initialAnimationValues;
         this.animatedValues = {};
 
         this.armAnimator.reset();
@@ -67,7 +76,7 @@ class Catapult extends Node3D {
       this.boulderAnimator.playing ||
       (this.armAnimator.finished && this.boulderAnimator.finished)
     ) {
-      this.boulderAnimatedValues = { height: 4, vx: 20, span: 0.5, vy: 0 };
+      this.boulderAnimatedValues = this.initialAnimationValues;
       this.animatedValues = {};
 
       this.armAnimator.stop();
@@ -76,15 +85,19 @@ class Catapult extends Node3D {
   }
 
   update() {
+    this.recalculate(true);
+
     this.armNode.rotX = -this.animatedValues.angle || 0;
 
-    this.boulderNode
-      .setTranslation([
-        0,
-        this.boulderAnimatedValues.span,
-        this.boulderAnimatedValues.height
-      ])
-      .setRotation([this.animatedValues.angle || 0, 0, 0])
+    const boulderTransform = mat4.create();
+
+    mat4.translate(boulderTransform, boulderTransform, [
+      0,
+      this.boulderAnimatedValues.span,
+      this.boulderAnimatedValues.height
+    ]);
+
+    this.boulderNode.transformMatrix = boulderTransform;
   }
 
   buildBase() {
@@ -398,8 +411,9 @@ class Catapult extends Node3D {
 
     this.boulderNode = new PointLight(
       [0, 0, 0],
-      [0, 0, 0],
       [255, 197, 78],
+      [255, 255, 255],
+      [0.1, 0.8, 0.0],
       0.5
     );
 

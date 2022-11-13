@@ -54,6 +54,10 @@ class DragCamera {
     });
   }
 
+  getObserver() {
+    return [this.observer.x, this.observer.y, this.observer.z];
+  }
+
   setGUIListener() {
     if (this.UI) return;
 

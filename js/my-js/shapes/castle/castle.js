@@ -4,19 +4,14 @@ class Castle extends Node3D {
   constructor(numberOfTowers, towerHeight, towerWidth, distanceToTower) {
     super();
 
+    this.material = new Stone([217, 217, 217]);
+
     const castleTransform = mat4.create();
     mat4.rotateY(castleTransform, castleTransform, Math.PI / numberOfTowers);
 
-    this.setColor([99, 100, 101]);
-
     const towers = new Array(numberOfTowers)
       .fill(0)
-      .map(
-        () =>
-          new Node3D(
-            new Tower(towerHeight, towerWidth, H).generateSurface(20, 20)
-          )
-      );
+      .map(() => new Tower(towerHeight, towerWidth, H));
 
     towers.forEach((towerNode, i) => {
       const totalTowers = towers.length;
@@ -64,12 +59,7 @@ class Castle extends Node3D {
       .transform(castleTransform)
       .addChildren(...towers, walls, gate);
 
-    this.addChildren(
-      bridgeNode.setColor([172, 133, 62]),
-      this.castleNode,
-      new PointLight([12, 2, 5], [10, 0, 10], [255, 197, 78]),
-      new PointLight([12, 2, -5], [10, 0, 10], [255, 197, 78])
-    );
+    this.addChildren(bridgeNode.setColor([172, 133, 62]), this.castleNode);
   }
 
   openGate(open) {
@@ -77,6 +67,9 @@ class Castle extends Node3D {
   }
 
   liftBridge(lift) {
-    this.bridgeNode.rotZ = (lift * Math.PI) / 2;
+    if ((this, this.bridgeNode.rotZ !== (lift * Math.PI) / 2)) {
+      this.bridgeNode.rotZ = (lift * Math.PI) / 2;
+      this.bridgeNode.recalculate(true);
+    }
   }
 }

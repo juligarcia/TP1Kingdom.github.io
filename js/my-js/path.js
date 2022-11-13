@@ -37,10 +37,6 @@ class Path {
     return [normal[0], normal[1], normal[2]];
   }
 
-  norm(vec) {
-    return Math.sqrt(vec.map((x) => Math.pow(x, 2)).reduce((a, b) => a + b, 0));
-  }
-
   binormal(tangent, normal) {
     const binormal = vec3.create();
 

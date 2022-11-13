@@ -24,7 +24,6 @@
     <script src="./js/three.min.js"></script>
     <script src="./js/webgl-utils.js"></script>
     <script src="./js/dat.gui.js"></script>
-    <script src="./js/my-js/geometry.js"></script>
     <style>
         html {
             height: 100%;
@@ -85,6 +84,7 @@
         var matrizModelado = mat4.create();
 
         var pointLightCount = new LightCount("totalPLights");
+        var spotLightCount = new LightCount("totalSLights");
 
         const camera = new DragCamera();
 
@@ -113,14 +113,10 @@
         });
 
         function initGL(canvas) {
+            gl = canvas.getContext("webgl");
+            gl.canvas.width = $canvas.width();
+            gl.canvas.height = $canvas.height();
 
-            try {
-                gl = canvas.getContext("webgl");
-                gl.canvas.width = $canvas.width();
-                gl.canvas.height = $canvas.height();
-            } catch (e) {
-                console.error(e);
-            }
             if (!gl) {
                 alert("Could not initialise WebGL, sorry :-(");
             }
@@ -158,7 +154,7 @@
 
             if (type == "fragment")
                 shader = gl.createShader(gl.FRAGMENT_SHADER);
-            else // "vertex"
+            else
                 shader = gl.createShader(gl.VERTEX_SHADER);
 
             gl.shaderSource(shader, code);
@@ -219,8 +215,6 @@
             shaderProgram.normalMap = gl.getUniformLocation(shaderProgram, "normalMap");
             shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
             shaderProgram.frameUniform = gl.getUniformLocation(shaderProgram, "time");
-            shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightPosition");
-            shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
 
             // Inicializo las variables uniformes necesarias para Phong en los shaders
 
@@ -229,6 +223,8 @@
             shaderProgram.ka = gl.getUniformLocation(shaderProgram, "material.ka");
             shaderProgram.shininess = gl.getUniformLocation(shaderProgram, "material.shininess");
             shaderProgram.materialColor = gl.getUniformLocation(shaderProgram, "material.color");
+
+            shaderProgram.observer = gl.getUniformLocation(shaderProgram, "observer");
         }
 
 
@@ -265,8 +261,6 @@
             // Se inicializan las variables asociadas con la Iluminación
 
             gl.uniform1f(shaderProgram.frameUniform, time / 10.0);
-            gl.uniform3f(shaderProgram.ambientColorUniform, 221 / 255, 204 / 255, 70 / 255);
-            gl.uniform3f(shaderProgram.directionalColorUniform, 1.2, 1.1, 0.7);
             gl.uniform1i(shaderProgram.normalMap, modo === "normalMap");
 
             const TARGETS = {
@@ -275,14 +269,11 @@
 
             matrizVista = camera.buildLookAt(TARGETS[cameraTarget]);
 
-            castleNode.openGate(openGate);
-            castleNode.liftBridge(liftBridge);
-
             var lightPosition = [300.0, 300.0, 0.0];
             gl.uniform3fv(shaderProgram.lightingDirectionUniform, lightPosition);
 
             setMatrixUniforms();
-            crearGeometria();
+            worldNode.draw();
         }
 
         function tick() {
@@ -299,7 +290,13 @@
             catapultNode.update();
             catapultCenter = catapultNode.getCenter();
 
+            castleNode.openGate(openGate);
+            castleNode.liftBridge(liftBridge);
+
             camera.update();
+
+            gl.uniform3f(shaderProgram.observer, ...camera.getObserver());
+
             drawScene();
         }
 
@@ -318,9 +315,10 @@
             initGL(canvas);
             initShaders();
 
-            new DirectLight([-1, -1, 0], [5, 0, 5], [255, 255, 255]);
+            new DirectLight([-1, -1, 0], [0, 115, 153], [222, 182, 88]);
 
             pointLightCount.setGLCount();
+            spotLightCount.setGLCount();
 
             gl.clearColor(66.2, 0.2, 0.2, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT);

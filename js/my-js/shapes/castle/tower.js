@@ -1,5 +1,7 @@
-class Tower {
+class Tower extends Node3D {
   constructor(height, width, h) {
+    super();
+
     if (height < h * 3) {
       throw new Error(`Tower must be at least ${H * 3} units tall`);
     }
@@ -7,9 +9,13 @@ class Tower {
     this.height = height;
     this.h = h;
     this.width = width;
+
+    this.model = this.generateTowerSurface(20, 20);
+
+    this.addChildren(new Torch([3.5, 2, 0]));
   }
 
-  generateSurface(rows, cols) {
+  generateTowerSurface(rows, cols) {
     const towerHeight = this.height - 2 * this.h;
     const width = this.width;
 
@@ -51,5 +57,106 @@ class Tower {
     const shape3D = new SweepSurface(shape, path);
 
     return shape3D;
+  }
+}
+
+class Torch extends Node3D {
+  constructor(translation, rotation) {
+    super();
+
+    this.m;
+    this.lightPos = translation;
+
+    const lightTransform = mat4.create();
+    const stickTransform = mat4.create();
+
+    mat4.translate(lightTransform, lightTransform, translation);
+
+    mat4.translate(stickTransform, stickTransform, translation);
+
+    if (rotation) mat4.rotateY(stickTransform, stickTransform, rotation);
+
+    mat4.rotateZ(stickTransform, stickTransform, -Math.PI / 4 + Math.PI);
+
+    this.addChildren(
+      new PointLight(
+        [0, 0, 0],
+        [255, 197, 78],
+        [255, 255, 255],
+        [0.0, 0.9, 0.0]
+      ).transform(lightTransform),
+      this.generateStick().transform(stickTransform)
+    );
+  }
+
+  norm(vec) {
+    return Math.sqrt(vec.map((x) => Math.pow(x, 2)).reduce((a, b) => a + b, 0));
+  }
+
+  generateStick() {
+    const supportAxisShape = new Circular("xy", 0.05).build(20);
+
+    const supportAxisPathCP = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, this.lightPos[1], 0]
+    ];
+
+    const supportAxisPath = new Bezier(supportAxisPathCP, "xy").build(20);
+
+    return new Node3D(
+      new SweepSurface(supportAxisShape, supportAxisPath, true)
+    ).setColor([131, 104, 40]);
+  }
+}
+
+class SpotTorch extends Node3D {
+  constructor(theta, translation, rotation) {
+    super();
+
+    this.m;
+    this.lightPos = translation;
+
+    const lightTransform = mat4.create();
+    const stickTransform = mat4.create();
+
+    mat4.translate(lightTransform, lightTransform, translation);
+
+    mat4.translate(stickTransform, stickTransform, translation);
+
+    if (rotation) mat4.rotateY(stickTransform, stickTransform, rotation);
+
+    mat4.rotateZ(stickTransform, stickTransform, -Math.PI / 4 + Math.PI);
+
+    this.addChildren(
+      new SpotLight(
+        [0, 0, 0],
+        [255, 197, 78],
+        [255, 255, 255],
+        theta,
+        [0.0, 0.4, 0.0]
+      ).transform(lightTransform),
+      this.generateStick().transform(stickTransform)
+    );
+  }
+
+  norm(vec) {
+    return Math.sqrt(vec.map((x) => Math.pow(x, 2)).reduce((a, b) => a + b, 0));
+  }
+
+  generateStick() {
+    const supportAxisShape = new Circular("xy", 0.05).build(20);
+
+    const supportAxisPathCP = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, this.lightPos[1], 0]
+    ];
+
+    const supportAxisPath = new Bezier(supportAxisPathCP, "xy").build(20);
+
+    return new Node3D(
+      new SweepSurface(supportAxisShape, supportAxisPath, true)
+    ).setColor([131, 104, 40]);
   }
 }

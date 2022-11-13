@@ -1,3 +1,0 @@
-function crearGeometria() {
-  worldNode.draw();
-}

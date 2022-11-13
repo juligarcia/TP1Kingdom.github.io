@@ -65,13 +65,21 @@ class Gate extends Node3D {
       doorTransform
     );
 
-    this.children = [
-      new Node3D(this.generateWallSurface(20, 20)).setColor([99, 100, 101]),
+    this.addChildren(
+      new Node3D(this.generateWallSurface(20, 20)).addChildren(
+        new SpotTorch(
+          Math.PI / 4,
+          [this.wallLength - 0.5, 3, -this.wallWidth - 1],
+          Math.PI / 2
+        )
+      ),
       new Node3D(this.generateWallSurface(20, 20))
         .transform(wall2Transform)
-        .setColor([99, 100, 101]),
-      this.doorNode.setColor([172, 133, 62])
-    ];
+        .addChildren(
+          new SpotTorch(Math.PI / 4, [0.5, 3, -this.wallWidth - 1], Math.PI / 2)
+        ),
+      this.doorNode.setMaterial(new Wood([172, 133, 62]))
+    );
   }
 
   generateDoorSurface(rows, cols) {
@@ -174,6 +182,9 @@ class Gate extends Node3D {
   }
 
   openGate(open) {
-    this.doorNode.trY = this.height * open;
+    if (this.doorNode.trY !== this.height * open) {
+      this.doorNode.recalculate(true);
+      this.doorNode.trY = this.height * open;
+    }
   }
 }

@@ -20,22 +20,23 @@ class LightCount {
 }
 
 class PointLight extends Node3D {
-  constructor(position, ambient, specular, r = 0.25) {
+  constructor(position, diffuse, specular, coefs, r = 0.25) {
     const model = new Sphere(r);
     super(model);
 
+    this.coefs = coefs;
+
+    this.setMaterial(new LightEmiter(diffuse));
     this.isLightSource = true;
 
     this.setTranslation(position);
 
     this.position = [0, 0, 0];
-    this.ambient = ambient;
+    this.diffuse = diffuse;
     this.specular = specular;
 
     this.id = pointLightCount.getCount();
     pointLightCount.increaseCount();
-
-    this.setColor(specular);
   }
 
   init(m) {
@@ -43,22 +44,24 @@ class PointLight extends Node3D {
       shaderProgram,
       `pLights[${this.id}].position`
     );
-    const a = gl.getUniformLocation(
+    const d = gl.getUniformLocation(
       shaderProgram,
-      `pLights[${this.id}].ambient`
+      `pLights[${this.id}].diffuse`
     );
     const s = gl.getUniformLocation(
       shaderProgram,
       `pLights[${this.id}].specular`
     );
+    const c = gl.getUniformLocation(shaderProgram, `pLights[${this.id}].coefs`);
 
     const auxPos = vec4.fromValues(...this.position, 1);
 
     vec4.transformMat4(auxPos, auxPos, m);
 
     gl.uniform3f(p, ...auxPos);
-    gl.uniform3f(a, ...this.normalize(this.ambient));
+    gl.uniform3f(d, ...this.normalize(this.diffuse));
     gl.uniform3f(s, ...this.normalize(this.specular));
+    gl.uniform3f(c, ...this.coefs);
   }
 
   normalize(vec) {
@@ -83,17 +86,66 @@ class DirectLight {
 }
 
 class SpotLight extends Node3D {
-  constructor(position, ambient, specular, theta, model) {
+  constructor(position, diffuse, specular, theta, coefs, r = 0.25) {
+    const model = new Sphere(r);
     super(model);
 
-    this.position = position;
-    this.ambient = ambient;
+    this.coefs = coefs;
+
+    this.setMaterial(new LightEmiter(diffuse));
+    this.isLightSource = true;
+
+    this.setTranslation(position);
+
+    this.ambient = [0, 0, 0];
+    this.position = [0, 0, 0];
+    this.diffuse = diffuse;
     this.specular = specular;
-    this.theta = theta;
 
     this.id = spotLightCount.getCount();
     spotLightCount.increaseCount();
 
-    this.setColor(specular);
+    this.theta = theta;
+  }
+
+  init(m) {
+    const p = gl.getUniformLocation(
+      shaderProgram,
+      `sLights[${this.id}].position`
+    );
+
+    const d = gl.getUniformLocation(
+      shaderProgram,
+      `sLights[${this.id}].diffuse`
+    );
+
+    const s = gl.getUniformLocation(
+      shaderProgram,
+      `sLights[${this.id}].specular`
+    );
+
+    const a = gl.getUniformLocation(
+      shaderProgram,
+      `sLights[${this.id}].ambient`
+    );
+
+    const c = gl.getUniformLocation(shaderProgram, `sLights[${this.id}].coefs`);
+
+    const t = gl.getUniformLocation(shaderProgram, `sLights[${this.id}].theta`);
+
+    const auxPos = vec4.fromValues(...this.position, 1);
+
+    vec4.transformMat4(auxPos, auxPos, m);
+
+    gl.uniform3f(p, ...auxPos);
+    gl.uniform3f(a, ...this.normalize(this.ambient));
+    gl.uniform3f(d, ...this.normalize(this.diffuse));
+    gl.uniform3f(s, ...this.normalize(this.specular));
+    gl.uniform3f(c, ...this.coefs);
+    gl.uniform1f(t, this.theta);
+  }
+
+  normalize(vec) {
+    return vec.map((item) => item / 255);
   }
 }
