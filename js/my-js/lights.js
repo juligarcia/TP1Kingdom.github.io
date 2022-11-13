@@ -86,11 +86,13 @@ class DirectLight {
 }
 
 class SpotLight extends Node3D {
-  constructor(position, diffuse, specular, theta, coefs, r = 0.25) {
+  constructor(position, diffuse, specular, theta, coefs, r = 0.25, invert) {
     const model = new Sphere(r);
     super(model);
 
     this.coefs = coefs;
+
+    this.invert = invert;
 
     this.setMaterial(new LightEmiter(diffuse));
     this.isLightSource = true;
@@ -137,7 +139,7 @@ class SpotLight extends Node3D {
 
     vec4.transformMat4(auxPos, auxPos, m);
 
-    gl.uniform3f(p, ...auxPos);
+    gl.uniform3f(p, ...[auxPos[0], this.invert ? -auxPos[1] : auxPos, auxPos[2]]);
     gl.uniform3f(a, ...this.normalize(this.ambient));
     gl.uniform3f(d, ...this.normalize(this.diffuse));
     gl.uniform3f(s, ...this.normalize(this.specular));

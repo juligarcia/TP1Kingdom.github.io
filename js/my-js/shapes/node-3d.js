@@ -372,8 +372,14 @@ class Material {
 }
 
 class Stone extends Material {
-  constructor(color) {
+  constructor(color = [217, 217, 217]) {
     super(0.1, 0.5, 0.1, 1, color);
+  }
+}
+
+class RoofTile extends Material {
+  constructor() {
+    super(0.1, 0.5, 1.0, 1.5, [83, 83, 198]);
   }
 }
 

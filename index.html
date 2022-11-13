@@ -264,7 +264,8 @@
             gl.uniform1i(shaderProgram.normalMap, modo === "normalMap");
 
             const TARGETS = {
-                catapult: catapultCenter
+                catapult: catapultCenter,
+                center: [0, 5, 0]
             };
 
             matrizVista = camera.buildLookAt(TARGETS[cameraTarget]);

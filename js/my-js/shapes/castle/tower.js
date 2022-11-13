@@ -111,7 +111,7 @@ class Torch extends Node3D {
 }
 
 class SpotTorch extends Node3D {
-  constructor(theta, translation, rotation) {
+  constructor(theta, translation, rotation, invert) {
     super();
 
     this.m;
@@ -134,7 +134,9 @@ class SpotTorch extends Node3D {
         [255, 197, 78],
         [255, 255, 255],
         theta,
-        [0.0, 0.4, 0.0]
+        [0.0, 0.4, 0.0],
+        0.25,
+        invert
       ).transform(lightTransform),
       this.generateStick().transform(stickTransform)
     );

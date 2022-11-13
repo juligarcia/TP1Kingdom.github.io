@@ -127,11 +127,6 @@ class SweepSurface {
 
     mat4.mul(matrix, matrix, this.path[Math.round(v * this.levels)].normal);
 
-    if (this.closed && (v === 0 || v === 1)) {
-      const tangent = vec3.fromValues(matrix[8], matrix[9], matrix[10]);
-      mat4.rotate(matrix, matrix, v === 0 ? Math.PI / 2 : Math.PI / 2, tangent);
-    }
-
     const shapeNormalMatrix =
       this.shape[Math.round(u * this.pointsPerLevel)].normal;
 
