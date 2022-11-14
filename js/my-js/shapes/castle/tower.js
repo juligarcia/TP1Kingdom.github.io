@@ -81,8 +81,6 @@ class Torch extends Node3D {
     this.addChildren(
       new PointLight(
         [0, 0, 0],
-        [255, 197, 78],
-        [255, 255, 255],
         [0.0, 0.9, 0.0]
       ).transform(lightTransform),
       this.generateStick().transform(stickTransform)
@@ -131,8 +129,6 @@ class SpotTorch extends Node3D {
     this.addChildren(
       new SpotLight(
         [0, 0, 0],
-        [255, 197, 78],
-        [255, 255, 255],
         theta,
         [0.0, 0.4, 0.0],
         0.25,

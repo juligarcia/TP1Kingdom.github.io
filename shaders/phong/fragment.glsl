@@ -28,6 +28,7 @@ struct DirectLight {
 
   vec3 ambient;
   vec3 specular;
+  vec3 diffuse;
 };
 
 struct Material {
@@ -50,10 +51,10 @@ vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec
   }
 
   vec3 ambient  = light.ambient  * material.ka;
-  vec3 diffuse  = material.color * lambertian * material.kd;
+  vec3 diffuse  = light.diffuse * lambertian * material.kd;
   vec3 specular = spec * light.specular * material.ks;
 
-  return (ambient + diffuse + specular);
+  return (ambient + diffuse + specular) * material.color;
 }
 
 vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource) {
@@ -123,20 +124,46 @@ uniform int totalSLights;
 
 uniform Material material;
 
+uniform bool showDirectLighting;
+uniform bool showPointLighting;
+uniform bool showSpotLighting;
+
+uniform bool useNormalMap;
+uniform bool useGrid;
+
 void main() {
   vec3 normal = vNormal;
 
-  vec3 result = calculateDirectLight(directLight, normal, material, vWorldPosition, observer);
+  vec3 result;
 
-  for (int i = 0; i < 10; i++) {
-    if(i < totalPLights) result += calculatePointLight(pLights[i], normal, material, vWorldPosition, observer, isLightSource);
-    else break;
+  if (useGrid) {
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+    return;
   }
 
-  for (int i = 0; i < 10; i++) {
-    if(i < totalSLights) result += calculateSpotLight(sLights[i], normal, material, vWorldPosition, observer, isLightSource);
-    else break;
+  if (useNormalMap) {
+    result = normal * 0.5 + 0.5;
+    gl_FragColor = vec4(result, 1.0);
+    return;
   }
+
+  result = showDirectLighting ? calculateDirectLight(directLight, normal, material, vWorldPosition, observer) : vec3(0, 0, 0);
+
+  if (showPointLighting) {
+    for (int i = 0; i < 10; i++) {
+      if(i < totalPLights) result += calculatePointLight(pLights[i], normal, material, vWorldPosition, observer, isLightSource);
+      else break;
+    }
+  }
+
+  if (showSpotLighting) {
+    for (int i = 0; i < 10; i++) {
+      if(i < totalSLights) result += calculateSpotLight(sLights[i], normal, material, vWorldPosition, observer, isLightSource);
+      else break;
+    }
+  }
+
 
   gl_FragColor = vec4(result, 1.0);
 }

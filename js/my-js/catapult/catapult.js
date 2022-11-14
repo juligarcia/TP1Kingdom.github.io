@@ -411,8 +411,6 @@ class Catapult extends Node3D {
 
     this.boulderNode = new PointLight(
       [0, 0, 0],
-      [255, 197, 78],
-      [255, 255, 255],
       [0.1, 0.8, 0.0],
       0.5
     );

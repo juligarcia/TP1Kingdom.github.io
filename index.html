@@ -24,6 +24,7 @@
     <script src="./js/three.min.js"></script>
     <script src="./js/webgl-utils.js"></script>
     <script src="./js/dat.gui.js"></script>
+    <script src="./js/my-js/GUI.js"></script>
     <style>
         html {
             height: 100%;
@@ -39,7 +40,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: red;
+            background-color: Black;
         }
     </style>
 
@@ -60,7 +61,7 @@
         var vec3 = glMatrix.vec3;
         var vec4 = glMatrix.vec4;
 
-        var cameraTarget = "center";
+        var myGUI = createMenu();
 
         var liftBridge = 0;
         var vertexShaderFile = "vertex-shader.glsl";
@@ -75,6 +76,7 @@
         var aspect = $canvas.width() / $canvas.height();
 
         var lighting = "true";
+
 
         var vertexShaderSource;
         var fragmentShaderSource;
@@ -99,10 +101,12 @@
 
         var catapultCenter = vec3.create();
 
+
+
         worldNode
             .addChildren(
                 castleNode,
-                catapultNode
+                catapultNode,
             )
             .transform(sceneTransform);
 
@@ -213,10 +217,9 @@
             shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
             shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
             shaderProgram.normalMap = gl.getUniformLocation(shaderProgram, "normalMap");
-            shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
             shaderProgram.frameUniform = gl.getUniformLocation(shaderProgram, "time");
 
-            // Inicializo las variables uniformes necesarias para Phong en los shaders
+            // ---------------------------
 
             shaderProgram.kd = gl.getUniformLocation(shaderProgram, "material.kd");
             shaderProgram.ks = gl.getUniformLocation(shaderProgram, "material.ks");
@@ -225,6 +228,13 @@
             shaderProgram.materialColor = gl.getUniformLocation(shaderProgram, "material.color");
 
             shaderProgram.observer = gl.getUniformLocation(shaderProgram, "observer");
+
+            shaderProgram.showDirectLighting = gl.getUniformLocation(shaderProgram, "showDirectLighting");
+            shaderProgram.showPointLighting = gl.getUniformLocation(shaderProgram, "showPointLighting");
+            shaderProgram.showSpotLighting = gl.getUniformLocation(shaderProgram, "showSpotLighting");
+
+            shaderProgram.useGrid = gl.getUniformLocation(shaderProgram, "useGrid");
+            shaderProgram.useNormalMap = gl.getUniformLocation(shaderProgram, "useNormalMap");
         }
 
 
@@ -261,17 +271,20 @@
             // Se inicializan las variables asociadas con la Iluminación
 
             gl.uniform1f(shaderProgram.frameUniform, time / 10.0);
-            gl.uniform1i(shaderProgram.normalMap, modo === "normalMap");
 
             const TARGETS = {
-                catapult: catapultCenter,
-                center: [0, 5, 0]
+                "Catapult": catapultCenter,
+                "Castle": [0, 5, 0]
             };
 
-            matrizVista = camera.buildLookAt(TARGETS[cameraTarget]);
+            gl.uniform1i(shaderProgram.showDirectLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")]?.direct);
+            gl.uniform1i(shaderProgram.showPointLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")]?.point);
+            gl.uniform1i(shaderProgram.showSpotLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")]?.spot);
 
-            var lightPosition = [300.0, 300.0, 0.0];
-            gl.uniform3fv(shaderProgram.lightingDirectionUniform, lightPosition);
+            gl.uniform1i(shaderProgram.useNormalMap, !!RenderingModeConfig[myGUI.get("Rendering Mode")]?.normal);
+            gl.uniform1i(shaderProgram.useGrid, !!RenderingModeConfig[myGUI.get("Rendering Mode")]?.grid);
+
+            matrizVista = camera.buildLookAt(TARGETS[myGUI.get("Camera Target")]);
 
             setMatrixUniforms();
             worldNode.draw();
@@ -287,8 +300,10 @@
                 0,
                 25 * Math.sin(2 * Math.PI * rotateCatapultX)
             ]);
+
             catapultNode.setRotation([0, rotateCatapultY + Math.PI / 2 - 2 * Math.PI * rotateCatapultX, 0]);
             catapultNode.update();
+
             catapultCenter = catapultNode.getCenter();
 
             castleNode.openGate(openGate);
@@ -296,27 +311,48 @@
 
             camera.update();
 
+            worldNode.recalculateLights();
+
             gl.uniform3f(shaderProgram.observer, ...camera.getObserver());
 
             drawScene();
         }
 
-        function initMenu() {
-            var gui = new dat.GUI();
-            gui.add(window, "openGate", 0, 0.5).step(0.01);
-            gui.add(window, "rotateCatapultY", -Math.PI / 4, Math.PI / 4).step(0.001);
-            gui.add(window, "rotateCatapultX", 0, 1).step(0.01);
-            gui.add(window, "liftBridge", 0, 0.8).step(0.01);
-            gui.add(window, "modo", ["wireframe", "smooth", "edges", "normalMap"]);
-            gui.add(window, "cameraTarget", ["center", "catapult"]);
+        function createMenu() {
+            const myGUI = new GUI();
+
+            myGUI.addRange("Open Gate", 0, 0.5, 0);
+            myGUI.addRange("Rotate Catapult Y", -Math.PI / 4, Math.PI / 4, 0);
+            myGUI.addRange("Rotate Catapult X", 0, 1, 0);
+            myGUI.addRange("Lift Bridge", 0, 1, 0);
+
+            myGUI.addSelect("Rendering Mode", ["Smooth", "Polygons", "Normal Map"], "Smooth");
+            myGUI.addSelect("Lighting Mode", ["All", "Direct", "Point", "Spot", "Point & Spot", "None"], "All");
+            myGUI.addSelect("Camera Target", ["Castle", "Catapult"], "Castle");
+
+            myGUI.addColorPicker("Direct Light Ambient", [0, 115, 153]);
+            myGUI.addColorPicker("Direct Light Diffuse", [232, 198, 138]);
+            myGUI.addColorPicker("Direct Light Specular", [255, 255, 255]);
+
+            myGUI.addColorPicker("Point Light Ambient", [255, 0, 0]);
+            myGUI.addColorPicker("Point Light Diffuse", [222, 147, 30]);
+            myGUI.addColorPicker("Point Light Specular", [255, 255, 255]);
+
+            myGUI.addColorPicker("Spot Light Ambient", [255, 0, 0]);
+            myGUI.addColorPicker("Spot Light Diffuse", [222, 147, 30]);
+            myGUI.addColorPicker("Spot Light Specular", [255, 255, 255]);
+
+            myGUI.addKeyboardListener("Camera Target", [{ key: "1", value: "Castle" }, { key: "2", value: "Catapult" }]);
+
+            return myGUI;
         }
 
         function webGLStart() {
+            worldNode.addChildren(new DirectLight([-1, -0.5, 0]));
+
             var canvas = document.getElementById("myCanvas");
             initGL(canvas);
             initShaders();
-
-            new DirectLight([-1, -1, 0], [0, 115, 153], [222, 182, 88]);
 
             pointLightCount.setGLCount();
             spotLightCount.setGLCount();
@@ -326,7 +362,7 @@
             gl.enable(gl.DEPTH_TEST);
 
             $(window).on("resize", onResize);
-            initMenu();
+
             tick();
         }
 

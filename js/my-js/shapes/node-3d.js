@@ -56,6 +56,13 @@ class Node3D {
     return this;
   }
 
+  recalculateLights() {
+    this.children.forEach((child) => {
+      if (child.isLightSource) child.recalculate(true);
+      else child.recalculateLights();
+    });
+  }
+
   addChildren(...children) {
     this.children = this.children.concat(children);
 
@@ -284,10 +291,6 @@ class Node3D {
   }
 
   drawSelf(mesh) {
-    gl.uniform1i(shaderProgram.useLightingUniform, false);
-
-    gl.uniform3f(shaderProgram.objectsColor, ...vec3.fromValues(1, 1, 1));
-
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.webglPositionBuffer);
     gl.vertexAttribPointer(
       shaderProgram.vertexPositionAttribute,
@@ -320,29 +323,29 @@ class Node3D {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.webglIndexBuffer);
 
-    // if (modo !== "wireframe") {
-    gl.uniform1i(shaderProgram.useLightingUniform, true);
+    if (!!RenderingModeConfig[myGUI.get("Rendering Mode")]?.smooth) {
+      gl.uniform1i(shaderProgram.useLightingUniform, true);
 
-    const material = this.getMaterial();
+      const material = this.getMaterial();
 
-    if (material) material.setGLColors(this.color);
+      if (material) material.setGLColors(this.color);
 
-    gl.drawElements(
-      gl.TRIANGLES,
-      mesh.webglIndexBuffer.numItems,
-      gl.UNSIGNED_SHORT,
-      0
-    );
-    // }
+      gl.drawElements(
+        gl.TRIANGLES,
+        mesh.webglIndexBuffer.numItems,
+        gl.UNSIGNED_SHORT,
+        0
+      );
+    }
 
-    // if (modo !== "smooth" && modo !== "normalMap") {
-    //   gl.drawElements(
-    //     gl.LINE_STRIP,
-    //     mesh.webglIndexBuffer.numItems,
-    //     gl.UNSIGNED_SHORT,
-    //     0
-    //   );
-    // }
+    if (!!RenderingModeConfig[myGUI.get("Rendering Mode")]?.grid) {
+      gl.drawElements(
+        gl.LINE_STRIP,
+        mesh.webglIndexBuffer.numItems,
+        gl.UNSIGNED_SHORT,
+        0
+      );
+    }
   }
 }
 
@@ -379,7 +382,7 @@ class Stone extends Material {
 
 class RoofTile extends Material {
   constructor() {
-    super(0.1, 0.5, 1.0, 1.5, [83, 83, 198]);
+    super(0.1, 0.7, 1.0, 1.5, [83, 83, 198]);
   }
 }
 
@@ -403,6 +406,6 @@ class Grass extends Material {
 
 class LightEmiter extends Material {
   constructor(color) {
-    super(0.0, 1.0, 0.0, 0.1, color);
+    super(0.0, 1.0, 0.0, 1.0, color);
   }
 }

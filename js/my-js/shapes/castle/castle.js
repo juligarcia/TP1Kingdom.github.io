@@ -238,32 +238,24 @@ class MainBuilding extends Node3D {
     towerNode.addChildren(
       new SpotLight(
         [0, 0, 0],
-        [128, 159, 255],
-        [179, 198, 255],
         Math.PI / 3,
         [1.0, 0.2, 0.0],
         0.2
       ).setTranslation([2, 12, -4]),
       new SpotLight(
         [0, 0, 0],
-        [128, 159, 255],
-        [179, 198, 255],
         Math.PI / 3,
         [1.0, 0.2, 0.0],
         0.2
       ).setTranslation([2, 12, 4]),
       new SpotLight(
         [0, 0, 0],
-        [128, 159, 255],
-        [179, 198, 255],
         Math.PI / 3,
         [1.0, 0.2, 0.0],
         0.2
       ).setTranslation([-2, 12, 4]),
       new SpotLight(
         [0, 0, 0],
-        [128, 159, 255],
-        [179, 198, 255],
         Math.PI / 3,
         [1.0, 0.2, 0.0],
         0.2
