@@ -26,7 +26,6 @@ class PointLight extends Node3D {
 
     this.coefs = coefs;
 
-    this.setMaterial(new LightEmiter(myGUI.getColor("Point Light Diffuse")));
     this.isLightSource = true;
 
     this.setTranslation(position);
@@ -38,6 +37,8 @@ class PointLight extends Node3D {
   }
 
   init(m) {
+    this.setMaterial(new LightEmiter(myGUI.getColor("Point Light Diffuse")));
+
     const a = gl.getUniformLocation(
       shaderProgram,
       `pLights[${this.id}].ambient`
@@ -111,7 +112,6 @@ class SpotLight extends Node3D {
 
     this.invert = invert;
 
-    this.setMaterial(new LightEmiter(myGUI.getColor("Spot Light Diffuse")));
     this.isLightSource = true;
 
     this.setTranslation(position);
@@ -125,6 +125,8 @@ class SpotLight extends Node3D {
   }
 
   init(m) {
+    this.setMaterial(new LightEmiter(myGUI.getColor("Spot Light Diffuse")));
+
     const p = gl.getUniformLocation(
       shaderProgram,
       `sLights[${this.id}].position`

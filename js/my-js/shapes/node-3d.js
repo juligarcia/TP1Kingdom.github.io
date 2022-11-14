@@ -16,6 +16,8 @@ class Node3D {
     this.trY = 0;
     this.trZ = 0;
 
+    this.nodeId = null;
+
     this.children = [];
 
     this.firstRender = true;
@@ -73,6 +75,24 @@ class Node3D {
     return this;
   }
 
+  setId(id) {
+    if (!id) return this;
+
+    this.nodeId = id;
+
+    return this;
+  }
+
+  removeChild(id) {
+    if (!id) return;
+
+    this.children = this.children.filter((child) => {
+      if (child.nodeId) return child.nodeId !== id;
+
+      return true;
+    });
+  }
+
   transform(m) {
     this.shouldRecalculate = true;
 
@@ -111,12 +131,14 @@ class Node3D {
       this.init(transformMatrix);
     }
 
-    if (this.model) {
+    const model = this.model?.generateSurface?.() || this.model;
+
+    if (model) {
       const mesh = this.buildMesh(
-        this.model,
+        model,
         transformMatrix,
-        this.model.levels,
-        this.model.pointsPerLevel
+        model.levels,
+        model.pointsPerLevel
       );
 
       this.drawSelf(mesh);
@@ -147,12 +169,15 @@ class Node3D {
       this.shouldRecalculate = should;
       this.children.forEach((child) => child.recalculate(should));
     }
+
+    return this;
   }
 
   buildMesh(surface, m, rows, cols) {
     if (this.firstRender) this.firstRender = false;
-    else if (this.shouldRecalculate) this.shouldRecalculate = false;
-    else return this.buffers;
+    else if (this.shouldRecalculate) {
+      this.shouldRecalculate = false;
+    } else return this.buffers;
 
     let positionBuffer = [];
     let normalBuffer = [];
@@ -324,8 +349,6 @@ class Node3D {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.webglIndexBuffer);
 
     if (!!RenderingModeConfig[myGUI.get("Rendering Mode")]?.smooth) {
-      gl.uniform1i(shaderProgram.useLightingUniform, true);
-
       const material = this.getMaterial();
 
       if (material) material.setGLColors(this.color);
@@ -406,6 +429,6 @@ class Grass extends Material {
 
 class LightEmiter extends Material {
   constructor(color) {
-    super(0.0, 1.0, 0.0, 1.0, color);
+    super(0.0, 100.0, 0.0, 100.0, color);
   }
 }

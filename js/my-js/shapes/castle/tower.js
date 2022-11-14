@@ -1,22 +1,23 @@
 class Tower extends Node3D {
-  constructor(height, width, h) {
+  constructor(width, h) {
     super();
+
+    const height = myGUI.get("Tower Height");
 
     if (height < h * 3) {
       throw new Error(`Tower must be at least ${H * 3} units tall`);
     }
 
-    this.height = height;
     this.h = h;
     this.width = width;
 
-    this.model = this.generateTowerSurface(20, 20);
+    this.model = this;
 
     this.addChildren(new Torch([3.5, 2, 0]));
   }
 
-  generateTowerSurface(rows, cols) {
-    const towerHeight = this.height - 2 * this.h;
+  generateSurface() {
+    const towerHeight = myGUI.get("Tower Height") - 2 * this.h;
     const width = this.width;
 
     const controlsPoints = [
@@ -51,8 +52,8 @@ class Tower extends Node3D {
       [0, towerHeight + 1.5 * this.h, 0]
     ];
 
-    const path = new Circular().build(cols);
-    const shape = new JointBezier(3, controlsPoints).build(rows);
+    const path = new Circular().build(20);
+    const shape = new JointBezier(3, controlsPoints).build(20);
 
     const shape3D = new SweepSurface(shape, path);
 
@@ -79,10 +80,7 @@ class Torch extends Node3D {
     mat4.rotateZ(stickTransform, stickTransform, -Math.PI / 4 + Math.PI);
 
     this.addChildren(
-      new PointLight(
-        [0, 0, 0],
-        [0.0, 0.9, 0.0]
-      ).transform(lightTransform),
+      new PointLight([0, 0, 0], [0.0, 0.9, 0.0]).transform(lightTransform),
       this.generateStick().transform(stickTransform)
     );
   }
@@ -127,13 +125,9 @@ class SpotTorch extends Node3D {
     mat4.rotateZ(stickTransform, stickTransform, -Math.PI / 4 + Math.PI);
 
     this.addChildren(
-      new SpotLight(
-        [0, 0, 0],
-        theta,
-        [0.0, 0.4, 0.0],
-        0.25,
-        invert
-      ).transform(lightTransform),
+      new SpotLight([0, 0, 0], theta, [0.0, 0.4, 0.0], 0.25, invert).transform(
+        lightTransform
+      ),
       this.generateStick().transform(stickTransform)
     );
   }

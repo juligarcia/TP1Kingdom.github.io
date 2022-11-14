@@ -58,10 +58,6 @@ vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec
 }
 
 vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource) {
-  if(isLightSource) {
-    normal = -normal;
-  }
-
   vec3 N = normalize(normal);
   vec3 L = normalize(light.position - fragmentPosition);
 
@@ -69,8 +65,6 @@ vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 
   float specular = 0.0;
 
   float d = length(light.position - fragmentPosition);
-
-  if (isLightSource) d = 0.01;
 
   float attenuation = 1.0 / (light.coefs.x * d * d + light.coefs.y * d + light.coefs.z);
 
@@ -81,11 +75,15 @@ vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 
     specular = pow(specAngle, material.shininess);
   }
 
+  if (isLightSource) {
+    return material.kd * light.diffuse * material.color;
+  }
+
   return attenuation * (
     material.ka * light.ambient +
     material.kd * lambertian * light.diffuse +
     material.ks * specular * light.specular
-  );
+  ) * material.color;
 }
 
 vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource) {
@@ -99,7 +97,7 @@ vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fr
 
     float factor = (1.0 - (1.0 - spot) / (1.0 - cos(light.theta)));
 
-    return factor * color;
+    return factor * color * material.color;
   }
 
   return vec3(0, 0, 0);

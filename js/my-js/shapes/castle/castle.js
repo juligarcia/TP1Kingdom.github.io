@@ -1,17 +1,20 @@
 const H = 0.5;
 
 class Castle extends Node3D {
-  constructor(numberOfTowers, towerHeight, towerWidth, distanceToTower) {
+  constructor(towerWidth, distanceToTower) {
     super();
 
+    this.towerHeight = myGUI.get("Tower Height");
+    this.numberOfTowers = myGUI.get("Number of Towers");
+    this.towerWidth = towerWidth;
     this.material = new Stone([217, 217, 217]);
+    this.distanceToTower = distanceToTower;
 
-    const castleTransform = mat4.create();
-    mat4.rotateY(castleTransform, castleTransform, Math.PI / numberOfTowers);
-
-    const towers = new Array(numberOfTowers)
+    const towers = new Array(this.numberOfTowers)
       .fill(0)
-      .map(() => new Tower(towerHeight, towerWidth, H));
+      .map((_, index) => new Tower(towerWidth, H).setId(`tower-${index}`));
+
+    this.towers = towers;
 
     towers.forEach((towerNode, i) => {
       const totalTowers = towers.length;
@@ -19,21 +22,13 @@ class Castle extends Node3D {
 
       const m = mat4.create();
 
-      mat4.rotateY(m, m, 2 * Math.PI * u);
+      mat4.rotateY(m, m, 2 * Math.PI * u + Math.PI / totalTowers);
       mat4.translate(m, m, [distanceToTower, 0, 0]);
 
       towerNode.transform(m);
     });
 
-    const walls = new Node3D(
-      new Walls(
-        numberOfTowers,
-        towerHeight,
-        towerWidth,
-        distanceToTower,
-        H
-      ).generateSurface(20, 50)
-    );
+    this.wallsNode = new Node3D(new Walls(towerWidth, distanceToTower, H));
 
     const bridge = new Bridge(7);
 
@@ -44,26 +39,74 @@ class Castle extends Node3D {
 
     this.bridgeNode = bridgeNode.transform(bridgeTransform);
 
-    const gate = new Gate(
-      H,
-      towerWidth / 3,
-      numberOfTowers,
-      towerWidth,
-      towerHeight,
-      distanceToTower
-    );
+    const gate = new Gate(H, towerWidth / 3, towerWidth, distanceToTower);
 
     this.gateNode = gate;
 
-    this.castleNode = new Node3D()
-      .transform(castleTransform)
-      .addChildren(...towers, walls, gate);
+    this.castleNode = new Node3D().addChildren(...towers, this.wallsNode, gate);
 
     this.addChildren(
       bridgeNode.setColor([172, 133, 62]),
       this.castleNode,
       new MainBuilding()
     );
+  }
+
+  updateTowersHeight() {
+    const newHeight = myGUI.get("Tower Height");
+
+    if (newHeight !== this.towerHeight) {
+      this.towerHeight = newHeight;
+
+      this.gateNode.recalculate(true);
+
+      this.wallsNode.model.towerHeight = newHeight;
+      this.wallsNode.recalculate(true);
+
+      this.towers.forEach((tower) => {
+        tower.height = newHeight;
+        tower.recalculate(true);
+      });
+    }
+  }
+
+  updateNumberOfTowers() {
+    const newNum = myGUI.get("Number of Towers");
+
+    if (newNum !== this.numberOfTowers) {
+      for (let i = 0; i < this.numberOfTowers; i++)
+        this.castleNode.removeChild(`tower-${i}`);
+
+      this.numberOfTowers = newNum;
+
+      this.gateNode.doorNode.numberOfTowers = newNum;
+
+      this.wallsNode.model.numberOfTowers = newNum;
+
+      const towers = new Array(this.numberOfTowers)
+        .fill(0)
+        .map((_, index) =>
+          new Tower(this.towerWidth, H).setId(`tower-${index}`)
+        );
+
+      this.towers = towers;
+
+      towers.forEach((towerNode, i) => {
+        const totalTowers = towers.length;
+        const u = i / totalTowers;
+
+        const m = mat4.create();
+
+        mat4.rotateY(m, m, 2 * Math.PI * u - Math.PI / totalTowers);
+        mat4.translate(m, m, [this.distanceToTower, 0, 0]);
+
+        towerNode.transform(m);
+      });
+
+      this.castleNode.addChildren(...towers);
+
+      this.recalculate(true);
+    }
   }
 
   openGate(open) {
