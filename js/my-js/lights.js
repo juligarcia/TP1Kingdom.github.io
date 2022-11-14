@@ -26,7 +26,8 @@ class PointLight extends Node3D {
 
     this.coefs = coefs;
 
-    this.isLightSource = true;
+    this.lightType = "point";
+    this.isLightSource = !!this.lightType;
 
     this.setTranslation(position);
 
@@ -81,7 +82,8 @@ class DirectLight extends Node3D {
   constructor(direction) {
     super();
 
-    this.isLightSource = true;
+    this.lightType = "direct";
+    this.isLightSource = !!this.lightType;
 
     this.direction = direction;
   }
@@ -104,7 +106,7 @@ class DirectLight extends Node3D {
 }
 
 class SpotLight extends Node3D {
-  constructor(position, theta, coefs, r = 0.25, invert) {
+  constructor(position, theta, coefs, r = 0.25, invert, id) {
     const model = new Sphere(r);
     super(model);
 
@@ -112,14 +114,19 @@ class SpotLight extends Node3D {
 
     this.invert = invert;
 
-    this.isLightSource = true;
+    this.lightType = "spot";
+    this.isLightSource = !!this.lightType;
 
     this.setTranslation(position);
 
     this.position = [0, 0, 0];
 
-    this.id = spotLightCount.getCount();
-    spotLightCount.increaseCount();
+    if (id !== undefined) {
+      this.id = id;
+    } else {
+      this.id = spotLightCount.getCount();
+      spotLightCount.increaseCount();
+    }
 
     this.theta = theta;
   }

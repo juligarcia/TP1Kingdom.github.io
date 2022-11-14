@@ -77,6 +77,8 @@ class Gate extends Node3D {
   }
 
   preRender() {
+    super.preRender();
+
     const [axis, selfTransform] = this.getSelfTranform();
 
     this.transformMatrix = selfTransform;
@@ -92,25 +94,7 @@ class Gate extends Node3D {
     const doorTransform = mat4.create();
     mat4.translate(doorTransform, doorTransform, [this.wallLength, 0, 0]);
 
-    this.children[0].removeChild("left-light");
-    this.children[0].addChildren(
-      new SpotTorch(
-        Math.PI / 4,
-        [this.wallLength - 0.5, 2, -this.wallWidth - 1],
-        Math.PI / 2
-      ).setId("left-light")
-    );
-
     this.children[1].transformMatrix = wall2Transform;
-    this.children[1].removeChild("right-light");
-    this.children[1].addChildren(
-      new SpotTorch(
-        Math.PI / 4,
-        [0.5, 2, -this.wallWidth - 1],
-        Math.PI / 2
-      ).setId("right-light")
-    );
-
     this.children[2].transformMatrix = doorTransform;
   }
 }

@@ -107,7 +107,7 @@ class Torch extends Node3D {
 }
 
 class SpotTorch extends Node3D {
-  constructor(theta, translation, rotation, invert) {
+  constructor(theta, translation, rotation = 0, invert, lightId) {
     super();
 
     this.m;
@@ -120,14 +120,17 @@ class SpotTorch extends Node3D {
 
     mat4.translate(stickTransform, stickTransform, translation);
 
-    if (rotation) mat4.rotateY(stickTransform, stickTransform, rotation);
-
-    mat4.rotateZ(stickTransform, stickTransform, -Math.PI / 4 + Math.PI);
+    mat4.rotateX(stickTransform, stickTransform, rotation + Math.PI);
 
     this.addChildren(
-      new SpotLight([0, 0, 0], theta, [0.0, 0.4, 0.0], 0.25, invert).transform(
-        lightTransform
-      ),
+      new SpotLight(
+        [0, 0, 0],
+        theta,
+        [0.0, 0.4, 0.0],
+        0.25,
+        invert,
+        lightId
+      ).transform(lightTransform),
       this.generateStick().transform(stickTransform)
     );
   }
@@ -140,9 +143,9 @@ class SpotTorch extends Node3D {
     const supportAxisShape = new Circular("xy", 0.05).build(20);
 
     const supportAxisPathCP = [
+      [0, this.lightPos[1], 0],
       [0, 0, 0],
-      [0, 0, 0],
-      [0, this.lightPos[1], 0]
+      [0, 0, 0]
     ];
 
     const supportAxisPath = new Bezier(supportAxisPathCP, "xy").build(20);

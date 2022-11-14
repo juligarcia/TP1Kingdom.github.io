@@ -48,7 +48,9 @@ class Castle extends Node3D {
     this.addChildren(
       bridgeNode.setColor([172, 133, 62]),
       this.castleNode,
-      new MainBuilding()
+      new MainBuilding(),
+      new SpotTorch(Math.PI / 2, [17, 2, 3]),
+      new SpotTorch(Math.PI / 2, [17, 2, -3])
     );
   }
 
@@ -198,8 +200,8 @@ class MainBuilding extends Node3D {
       new Node3D(new SweepSurface(roofShape, roofPath, true)).setMaterial(
         new RoofTile()
       ),
-      new SpotTorch(Math.PI / 2, [0, 2, -5], Math.PI / 2, true),
-      new SpotTorch(Math.PI / 2, [0, 2, 5], -Math.PI / 2, true)
+      new SpotTorch(Math.PI / 3, [0, 3, -5], -Math.PI / 4),
+      new SpotTorch(Math.PI / 3, [0, 3, 5], Math.PI / 4)
     );
 
     return buildingNode;

@@ -57,7 +57,15 @@ vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec
   return (ambient + diffuse + specular) * material.color;
 }
 
-vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource) {
+vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource, bool isPointLight) {
+  if (isLightSource && !isPointLight) {
+    return vec3(0, 0, 0);
+  }
+
+  if (isLightSource) {
+    return material.kd * light.diffuse * material.color;
+  }
+
   vec3 N = normalize(normal);
   vec3 L = normalize(light.position - fragmentPosition);
 
@@ -75,10 +83,6 @@ vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 
     specular = pow(specAngle, material.shininess);
   }
 
-  if (isLightSource) {
-    return material.kd * light.diffuse * material.color;
-  }
-
   return attenuation * (
     material.ka * light.ambient +
     material.kd * lambertian * light.diffuse +
@@ -86,14 +90,22 @@ vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 
   ) * material.color;
 }
 
-vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource) {
+vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource, bool isSpotLight) {
+  if (isLightSource && !isSpotLight) {
+    return vec3(0, 0, 0);
+  }
+
+  if (isLightSource) {
+    return material.kd * light.diffuse * material.color;
+  }
+
   vec3 lightToPixel = normalize(fragmentPosition - light.position);
   float spot = max(dot(normalize(vec3(0, -light.position.y, 0)), lightToPixel), 0.0);
 
   if (spot >= cos(light.theta)) {
     PointLight auxLight = PointLight(light.position, light.coefs, light.ambient, light.specular, light.diffuse);
 
-    vec3 color = calculatePointLight(auxLight, normal, material, fragmentPosition, observer, isLightSource);
+    vec3 color = calculatePointLight(auxLight, normal, material, fragmentPosition, observer, isLightSource, false);
 
     float factor = (1.0 - (1.0 - spot) / (1.0 - cos(light.theta)));
 
@@ -109,6 +121,8 @@ varying vec3 vNormal;
 varying vec3 vWorldPosition;
 
 uniform bool isLightSource;
+uniform bool isSpotLight;
+uniform bool isPointLight;
 
 uniform vec3 observer;
 
@@ -150,14 +164,14 @@ void main() {
 
   if (showPointLighting) {
     for (int i = 0; i < 10; i++) {
-      if(i < totalPLights) result += calculatePointLight(pLights[i], normal, material, vWorldPosition, observer, isLightSource);
+      if(i < totalPLights) result += calculatePointLight(pLights[i], normal, material, vWorldPosition, observer, isLightSource, isPointLight);
       else break;
     }
   }
 
   if (showSpotLighting) {
     for (int i = 0; i < 10; i++) {
-      if(i < totalSLights) result += calculateSpotLight(sLights[i], normal, material, vWorldPosition, observer, isLightSource);
+      if(i < totalSLights) result += calculateSpotLight(sLights[i], normal, material, vWorldPosition, observer, isLightSource, isSpotLight);
       else break;
     }
   }

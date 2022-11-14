@@ -4,6 +4,7 @@ class Node3D {
     this.transformMatrix = mat4.create();
     this.parent = null;
     this.isLightSource = false;
+    this.lightType = null;
 
     this.glNode = new GLNode();
 
@@ -27,7 +28,12 @@ class Node3D {
 
   preRender() {
     const ls = gl.getUniformLocation(shaderProgram, "isLightSource");
+    const spot = gl.getUniformLocation(shaderProgram, "isSpotLight");
+    const point = gl.getUniformLocation(shaderProgram, "isPointLight");
+
     gl.uniform1i(ls, this.isLightSource);
+    gl.uniform1i(spot, this.lightType === "spot");
+    gl.uniform1i(point, this.lightType === "point");
   }
 
   setColor(RGB) {
@@ -127,9 +133,7 @@ class Node3D {
     mat4.mul(transformMatrix, parentTransform, transformMatrix);
     mat4.mul(transformMatrix, transformMatrix, initialTransform);
 
-    if (this.isLightSource) {
-      this.init(transformMatrix);
-    }
+    if (this.isLightSource) this.init(transformMatrix);
 
     const model = this.model?.generateSurface?.() || this.model;
 
