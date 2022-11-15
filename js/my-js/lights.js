@@ -4,12 +4,10 @@ class LightCount {
     this.variableName = variableName;
   }
 
-  getCount() {
-    return this.count;
-  }
-
-  increaseCount() {
-    this.count += 1;
+  set(id) {
+    if (id > this.count) {
+      this.count = id;
+    }
   }
 
   setGLCount() {
@@ -20,7 +18,7 @@ class LightCount {
 }
 
 class PointLight extends Node3D {
-  constructor(position, coefs, r = 0.25) {
+  constructor(position, coefs, r = 0.25, id) {
     const model = new Sphere(r);
     super(model);
 
@@ -33,13 +31,16 @@ class PointLight extends Node3D {
 
     this.position = [0, 0, 0];
 
-    this.id = pointLightCount.getCount();
-    pointLightCount.increaseCount();
+    this.id = id;
+    pointLightCount.set(id);
+  }
+
+  preRender() {
+    super.preRender();
+    this.setMaterial(new LightEmiter(myGUI.getColor("Point Light Diffuse")));
   }
 
   init(m) {
-    this.setMaterial(new LightEmiter(myGUI.getColor("Point Light Diffuse")));
-
     const a = gl.getUniformLocation(
       shaderProgram,
       `pLights[${this.id}].ambient`
@@ -106,13 +107,11 @@ class DirectLight extends Node3D {
 }
 
 class SpotLight extends Node3D {
-  constructor(position, theta, coefs, r = 0.25, invert, id) {
+  constructor(position, theta, coefs, r = 0.25, id) {
     const model = new Sphere(r);
     super(model);
 
     this.coefs = coefs;
-
-    this.invert = invert;
 
     this.lightType = "spot";
     this.isLightSource = !!this.lightType;
@@ -121,19 +120,18 @@ class SpotLight extends Node3D {
 
     this.position = [0, 0, 0];
 
-    if (id !== undefined) {
-      this.id = id;
-    } else {
-      this.id = spotLightCount.getCount();
-      spotLightCount.increaseCount();
-    }
+    this.id = id;
+    spotLightCount.set(id);
 
     this.theta = theta;
   }
 
-  init(m) {
+  preRender() {
+    super.preRender();
     this.setMaterial(new LightEmiter(myGUI.getColor("Spot Light Diffuse")));
+  }
 
+  init(m) {
     const p = gl.getUniformLocation(
       shaderProgram,
       `sLights[${this.id}].position`
@@ -159,13 +157,9 @@ class SpotLight extends Node3D {
     const t = gl.getUniformLocation(shaderProgram, `sLights[${this.id}].theta`);
 
     const auxPos = vec4.fromValues(...this.position, 1);
-
     vec4.transformMat4(auxPos, auxPos, m);
 
-    gl.uniform3f(
-      p,
-      ...[auxPos[0], this.invert ? -auxPos[1] : auxPos[1], auxPos[2]]
-    );
+    gl.uniform3f(p, ...auxPos);
     gl.uniform3f(a, ...myGUI.getColor("Spot Light Ambient"));
     gl.uniform3f(d, ...myGUI.getColor("Spot Light Diffuse"));
     gl.uniform3f(s, ...myGUI.getColor("Spot Light Specular"));

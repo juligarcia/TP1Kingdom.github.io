@@ -19,39 +19,55 @@ class DragCamera {
 
     this.UI = null;
 
-    window.addEventListener("mousedown", ({ clientX: x, clientY: y }) => {
-      if (!this.enabled) return;
+    window.addEventListener(
+      "mousedown",
+      ({ clientX: x, clientY: y }) => {
+        if (!this.enabled) return;
 
-      this.mouseDown = true;
-      this.anchor = { x, y };
-      this.dragPosition = { x, y };
-    });
-
-    window.addEventListener("mouseup", () => {
-      if (!this.enabled) return;
-
-      this.mouseDown = false;
-      this.dragX += this.dragPosition.x - this.anchor.x;
-      this.dragY += this.dragPosition.y - this.anchor.y;
-      this.anchor = { x: 0, y: 0 };
-      this.dragPosition = { x: 0, y: 0 };
-    });
-
-    window.addEventListener("mousemove", ({ clientX: x, clientY: y }) => {
-      if (!this.enabled) return;
-
-      if (this.mouseDown) {
+        this.mouseDown = true;
+        this.anchor = { x, y };
         this.dragPosition = { x, y };
-      }
-    });
+      },
+      { passive: true }
+    );
 
-    window.addEventListener("wheel", ({ deltaY }) => {
-      if (!this.enabled) return;
+    window.addEventListener(
+      "mouseup",
+      () => {
+        if (!this.enabled) return;
 
-      this.scrollingDown = deltaY > 0;
-      this.scrollingUp = deltaY < 0;
-      this.deltaScroll += deltaY;
-    });
+        this.mouseDown = false;
+        this.dragX += this.dragPosition.x - this.anchor.x;
+        this.dragY += this.dragPosition.y - this.anchor.y;
+        this.anchor = { x: 0, y: 0 };
+        this.dragPosition = { x: 0, y: 0 };
+      },
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "mousemove",
+      ({ clientX: x, clientY: y }) => {
+        if (!this.enabled) return;
+
+        if (this.mouseDown) {
+          this.dragPosition = { x, y };
+        }
+      },
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "wheel",
+      ({ deltaY }) => {
+        if (!this.enabled) return;
+
+        this.scrollingDown = deltaY > 0;
+        this.scrollingUp = deltaY < 0;
+        this.deltaScroll += deltaY;
+      },
+      { passive: true }
+    );
   }
 
   getObserver() {

@@ -21,8 +21,7 @@ class Node3D {
 
     this.children = [];
 
-    this.firstRender = true;
-    this.shouldRecalculate = false;
+    this.shouldRecalculate = true;
     this.buffers = null;
   }
 
@@ -49,6 +48,8 @@ class Node3D {
   }
 
   setRotation(rotations) {
+    this.recalculate(true);
+
     this.rotX = rotations[0];
     this.rotY = rotations[1];
     this.rotZ = rotations[2];
@@ -57,6 +58,8 @@ class Node3D {
   }
 
   setTranslation(translations) {
+    this.recalculate(true);
+
     this.trX = translations[0];
     this.trY = translations[1];
     this.trZ = translations[2];
@@ -126,6 +129,8 @@ class Node3D {
   draw(parentTransform = mat4.create()) {
     this.preRender();
 
+    if (!this.model && this.shouldRecalculate) this.shouldRecalculate = false;
+
     const initialTransform = this.getInitialTransform();
 
     const transformMatrix = mat4.clone(this.transformMatrix);
@@ -178,8 +183,7 @@ class Node3D {
   }
 
   buildMesh(surface, m, rows, cols) {
-    if (this.firstRender) this.firstRender = false;
-    else if (this.shouldRecalculate) {
+    if (this.shouldRecalculate) {
       this.shouldRecalculate = false;
     } else return this.buffers;
 

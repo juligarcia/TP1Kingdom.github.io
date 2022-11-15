@@ -28,6 +28,7 @@
     <style>
         html {
             height: 100%;
+            overflow: hidden;
         }
 
         body {
@@ -62,7 +63,6 @@
         var vertexShaderFile = "vertex-shader.glsl";
         var modo = "smooth";
         var shaderProgram;
-        var time = 0;
 
 
         var earth;
@@ -76,9 +76,7 @@
         var vertexShaderSource;
         var fragmentShaderSource;
 
-        var matrizProyeccion = mat4.create();
-        var matrizVista = mat4.create();
-        var matrizModelado = mat4.create();
+        var projectionMatrix = mat4.create();
 
         var pointLightCount = new LightCount("totalPLights");
         var spotLightCount = new LightCount("totalSLights");
@@ -91,6 +89,7 @@
 
         const catapultNode = new Catapult();
 
+
         var catapultCenter = vec3.create();
 
         worldNode
@@ -99,11 +98,53 @@
                 catapultNode,
             );
 
-        window.addEventListener("keydown", (e) => {
-            if (e.key === " ") {
-                catapultNode.fire();
-            }
+        const TARGETS = {
+            "Catapult": catapultNode.getCenter(),
+            "Castle": [0, 5, 0],
+        };
+
+        myGUI.bindChangeListener("Castle Height", () => {
+            castleNode.updateMainBuilding();
         });
+
+        myGUI.bindChangeListener([
+            "Direct Light Ambient",
+            "Direct Light Diffuse",
+            "Direct Light Specular",
+            "Spot Light Ambient",
+            "Spot Light Diffuse",
+            "Spot Light Specular",
+            "Point Light Ambient",
+            "Point Light Diffuse",
+            "Point Light Specular"
+        ], () => {
+            worldNode.recalculateLights();
+        });
+
+        myGUI.bindChangeListener("Tower Height", () => {
+            castleNode.updateTowersHeight();
+        });
+
+        myGUI.bindChangeListener("Number of Towers", () => {
+            castleNode.updateNumberOfTowers();
+        });
+
+        myGUI.bindChangeListener(["Rotate Catapult Y", "Rotate Catapult X"], () => {
+            catapultNode.updatePosition();
+        });
+
+        myGUI.bindChangeListener("Open Gate", () => {
+            castleNode.openGate();
+        });
+
+        myGUI.bindChangeListener("Lift Bridge", () => {
+            castleNode.liftBridge();
+        });
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === " " && !catapultNode.armAnimator.playing && !catapultNode.boulderAnimator.playing)
+                catapultNode.fire();
+        }, { passive: true });
 
         function initGL(canvas) {
             gl = canvas.getContext("webgl");
@@ -118,7 +159,6 @@
         function loadShaders() {
 
             $.when(loadVS(), loadFS()).done(function (res1, res2) {
-                //this code is executed when all ajax calls are done     
                 webGLStart();
             });
 
@@ -133,7 +173,7 @@
 
             function loadFS() {
                 return $.ajax({
-                    url: "shaders/phong/fragment.glsl",
+                    url: "shaders/fragment-shader.glsl",
                     success: function (result) {
                         fragmentShaderSource = result;
                     }
@@ -142,7 +182,6 @@
         }
 
         function getShader(gl, code, type) {
-
             var shader;
 
             if (type == "fragment")
@@ -199,16 +238,12 @@
             shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aNormal");
             gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
-            shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-            shaderProgram.mMatrixUniform = gl.getUniformLocation(shaderProgram, "uMMatrix");
-            shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
-            shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
-            shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
-            shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
-            shaderProgram.normalMap = gl.getUniformLocation(shaderProgram, "normalMap");
-            shaderProgram.frameUniform = gl.getUniformLocation(shaderProgram, "time");
+            // Variables usadas en el vertex shader ---------------------------
 
-            // ---------------------------
+            shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+            shaderProgram.uVMatrix = gl.getUniformLocation(shaderProgram, "uVMatrix");
+
+            // Variables usadas en el fragment shader ---------------------------
 
             shaderProgram.kd = gl.getUniformLocation(shaderProgram, "material.kd");
             shaderProgram.ks = gl.getUniformLocation(shaderProgram, "material.ks");
@@ -226,89 +261,45 @@
             shaderProgram.useNormalMap = gl.getUniformLocation(shaderProgram, "useNormalMap");
         }
 
-
-        function setMatrixUniforms() {
-
-            gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, matrizModelado);
-            gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, matrizVista);
-            gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, matrizProyeccion);
-
-            var normalMatrix = mat3.create();
-            mat3.fromMat4(normalMatrix, matrizModelado);
-
-            mat3.invert(normalMatrix, normalMatrix);
-            mat3.transpose(normalMatrix, normalMatrix);
-
-            gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
-        }
-
         function drawScene() {
-
             // Se configura el viewport dentro del "canvas". 
             // En este caso se utiliza toda el área disponible
             gl.viewport(0, 0, $canvas.width(), $canvas.height());
 
             // Se habilita el color de borrado para la pantalla (Color Buffer) y otros buffers
+
             gl.clearColor(0.2, 0.2, 0.2, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // Se configura la matriz de proyección
-            mat4.identity(matrizProyeccion);
-            mat4.perspective(matrizProyeccion, 30, aspect, 0.1, 100.0);
-            mat4.scale(matrizProyeccion, matrizProyeccion, [1, -1, 1]); // parche para hacer un flip de Y, parece haber un bug en glmatrix
+
+            mat4.identity(projectionMatrix);
+            mat4.perspective(projectionMatrix, 30, aspect, 0.1, 100.0);
+            mat4.scale(projectionMatrix, projectionMatrix, [1, -1, 1]);
 
             // Se inicializan las variables asociadas con la Iluminación
 
-            gl.uniform1f(shaderProgram.frameUniform, time / 10.0);
+            gl.uniform1i(shaderProgram.showDirectLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")].direct);
+            gl.uniform1i(shaderProgram.showPointLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")].point);
+            gl.uniform1i(shaderProgram.showSpotLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")].spot);
 
-            const TARGETS = {
-                "Catapult": catapultCenter,
-                "Castle": [0, 5, 0]
-            };
+            gl.uniform1i(shaderProgram.useNormalMap, !!RenderingModeConfig[myGUI.get("Rendering Mode")].normal);
+            gl.uniform1i(shaderProgram.useGrid, !!RenderingModeConfig[myGUI.get("Rendering Mode")].grid);
 
-            gl.uniform1i(shaderProgram.showDirectLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")]?.direct);
-            gl.uniform1i(shaderProgram.showPointLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")]?.point);
-            gl.uniform1i(shaderProgram.showSpotLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")]?.spot);
+            viewMatrix = camera.buildLookAt(TARGETS[myGUI.get("Camera Target")]);
 
-            gl.uniform1i(shaderProgram.useNormalMap, !!RenderingModeConfig[myGUI.get("Rendering Mode")]?.normal);
-            gl.uniform1i(shaderProgram.useGrid, !!RenderingModeConfig[myGUI.get("Rendering Mode")]?.grid);
+            gl.uniformMatrix4fv(shaderProgram.uVMatrix, false, viewMatrix);
+            gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, projectionMatrix);
 
-            matrizVista = camera.buildLookAt(TARGETS[myGUI.get("Camera Target")]);
-
-            setMatrixUniforms();
             worldNode.draw();
         }
 
         function tick() {
             requestAnimationFrame(tick);
 
-            time += 1 / 60;
-
-            const rotateCatapultX = myGUI.get("Rotate Catapult X");
-            const rotateCatapultY = myGUI.get("Rotate Catapult Y");
-
-
-            catapultNode.setTranslation([
-                25 * Math.cos(2 * Math.PI * rotateCatapultX),
-                0,
-                25 * Math.sin(2 * Math.PI * rotateCatapultX)
-            ]);
-
-            catapultNode.setRotation([0, rotateCatapultY + Math.PI / 2 - 2 * Math.PI * rotateCatapultX, 0]);
             catapultNode.update();
 
-            catapultCenter = catapultNode.getCenter();
-
-            castleNode.openGate(myGUI.get("Open Gate"));
-            castleNode.liftBridge(myGUI.get("Lift Bridge"));
-
-            castleNode.updateTowersHeight();
-            castleNode.updateNumberOfTowers();
-
             camera.update();
-
-            worldNode.recalculateLights();
-
             gl.uniform3f(shaderProgram.observer, ...camera.getObserver());
 
             drawScene();
@@ -317,28 +308,31 @@
         function createMenu() {
             const myGUI = new GUI();
 
-            myGUI.addRange("Open Gate", 0, 0.5, 0);
-            myGUI.addRange("Rotate Catapult Y", -Math.PI / 4, Math.PI / 4, 0);
-            myGUI.addRange("Rotate Catapult X", 0, 1, 0);
-            myGUI.addRange("Lift Bridge", 0, 1, 0);
-            myGUI.addRange("Tower Height", 3, 10, 6, 1);
-            myGUI.addRange("Number of Towers", 4, 8, 6, 1);
+            myGUI.addFolders(["Scene", "Castle", "Rendering", "Walls", "Catapult", , "Direct Light", "Point Lights", "Spot Lights"]);
 
-            myGUI.addSelect("Rendering Mode", ["Smooth", "Polygons", "Normal Map"], "Smooth");
-            myGUI.addSelect("Lighting Mode", ["All", "Direct", "Point", "Spot", "Point & Spot", "None"], "All");
-            myGUI.addSelect("Camera Target", ["Castle", "Catapult"], "Castle");
+            myGUI.addRange("Open Gate", 0, 0.5, 0, 0.01, "Castle");
+            myGUI.addRange("Castle Height", 6, 10, 7, 1, "Castle");
+            myGUI.addRange("Rotate Catapult Y", -Math.PI / 4, Math.PI / 4, 0, 0.01, "Catapult");
+            myGUI.addRange("Rotate Catapult X", 0, 1, 0, 0.01, "Catapult");
+            myGUI.addRange("Lift Bridge", 0, 1, 0, 0.01, "Castle");
+            myGUI.addRange("Tower Height", 3, 10, 6, 1, "Walls");
+            myGUI.addRange("Number of Towers", 4, 8, 6, 1, "Walls");
 
-            myGUI.addColorPicker("Direct Light Ambient", [0, 115, 153]);
-            myGUI.addColorPicker("Direct Light Diffuse", [232, 198, 138]);
-            myGUI.addColorPicker("Direct Light Specular", [255, 255, 255]);
+            myGUI.addSelect("Rendering Mode", ["Smooth", "Polygons", "Normal Map"], "Smooth", "Rendering");
+            myGUI.addSelect("Lighting Mode", ["All", "Direct", "Point", "Spot", "Point & Spot", "None"], "All", "Rendering");
+            myGUI.addSelect("Camera Target", ["Castle", "Catapult"], "Castle", "Scene");
 
-            myGUI.addColorPicker("Point Light Ambient", [255, 0, 0]);
-            myGUI.addColorPicker("Point Light Diffuse", [255, 210, 139]);
-            myGUI.addColorPicker("Point Light Specular", [255, 255, 255]);
+            myGUI.addColorPicker("Direct Light Ambient", [0, 115, 153], "Direct Light");
+            myGUI.addColorPicker("Direct Light Diffuse", [232, 198, 138], "Direct Light");
+            myGUI.addColorPicker("Direct Light Specular", [255, 255, 255], "Direct Light");
 
-            myGUI.addColorPicker("Spot Light Ambient", [255, 0, 0]);
-            myGUI.addColorPicker("Spot Light Diffuse", [255, 210, 139]);
-            myGUI.addColorPicker("Spot Light Specular", [255, 255, 255]);
+            myGUI.addColorPicker("Point Light Ambient", [255, 0, 0], "Point Lights");
+            myGUI.addColorPicker("Point Light Diffuse", [255, 210, 139], "Point Lights");
+            myGUI.addColorPicker("Point Light Specular", [255, 255, 255], "Point Lights");
+
+            myGUI.addColorPicker("Spot Light Ambient", [255, 0, 0], "Spot Lights");
+            myGUI.addColorPicker("Spot Light Diffuse", [255, 210, 139], "Spot Lights");
+            myGUI.addColorPicker("Spot Light Specular", [255, 255, 255], "Spot Lights");
 
             myGUI.addKeyboardListener("Camera Target", [{ key: "1", value: "Castle" }, { key: "2", value: "Catapult" }]);
 

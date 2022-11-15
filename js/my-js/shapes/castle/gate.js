@@ -23,13 +23,11 @@ class Gate extends Node3D {
     this.addChildren(new GateWall(this.h), new GateWall(this.h), this.doorNode);
   }
 
-  openGate(open) {
+  openGate() {
     const height = this.towerHeight - 3 * this.h;
 
-    if (this.doorNode.trY !== height * open) {
-      this.doorNode.recalculate(true);
-      this.doorNode.trY = height * open;
-    }
+    this.doorNode.recalculate(true);
+    this.doorNode.trY = height * myGUI.get("Open Gate");
   }
 
   getSelfTranform() {

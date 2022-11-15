@@ -22,34 +22,76 @@ class GUI {
     this.values = {};
 
     this.colors = {};
+
+    this.folders = {};
+
+    this.controllers = {};
   }
 
-  addKeyboardListener(variable, options) {
-    window.addEventListener("keydown", (e) => {
-      const selectedOption = options.find(({ key }) => key === e.key);
-
-      if (selectedOption) {
-        this.values[variable] = selectedOption.value;
-      }
+  addFolders(folders) {
+    folders.forEach((folder) => {
+      this.folders[folder] = this.gui.addFolder(folder);
+      this.folders[folder].open();
     });
   }
 
-  addRange(variable, from, upto, initial, step = 0.01) {
-    this.values[variable] = initial;
-
-    this.gui.add(this.values, variable, from, upto).step(step);
+  bindChangeListener(variables, callback) {
+    if (Array.isArray(variables)) {
+      variables.forEach((variable) =>
+        this.controllers[variable].onChange(callback)
+      );
+    } else this.controllers[variables].onChange(callback);
   }
 
-  addSelect(variable, options, initial) {
-    this.values[variable] = initial;
+  addKeyboardListener(variable, options) {
+    window.addEventListener(
+      "keydown",
+      (e) => {
+        const selectedOption = options.find(({ key }) => key === e.key);
 
-    this.gui.add(this.values, variable, options).listen();
+        if (selectedOption) {
+          this.values[variable] = selectedOption.value;
+        }
+      },
+      { passive: true }
+    );
   }
 
-  addColorPicker(variable, initial) {
+  addRange(variable, from, upto, initial, step = 0.01, folder) {
+    this.values[variable] = initial;
+
+    if (folder)
+      this.controllers[variable] = this.folders[folder]
+        .add(this.values, variable, from, upto)
+        .step(step);
+    else
+      this.controllers[variable] = this.gui
+        .add(this.values, variable, from, upto)
+        .step(step);
+  }
+
+  addSelect(variable, options, initial, folder) {
+    this.values[variable] = initial;
+
+    if (folder)
+      this.controllers[variable] = this.folders[folder]
+        .add(this.values, variable, options)
+        .listen();
+    else
+      this.controllers[variable] = this.gui
+        .add(this.values, variable, options)
+        .listen();
+  }
+
+  addColorPicker(variable, initial, folder) {
     this.colors[variable] = `rgb(${initial.join(", ")})`;
 
-    this.gui.addColor(this.colors, variable);
+    if (folder)
+      this.controllers[variable] = this.folders[folder].addColor(
+        this.colors,
+        variable
+      );
+    else this.controllers[variable] = this.gui.addColor(this.colors, variable);
   }
 
   get(variable) {

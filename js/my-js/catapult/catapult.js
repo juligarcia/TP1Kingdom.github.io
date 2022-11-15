@@ -66,26 +66,39 @@ class Catapult extends Node3D {
 
         this.armAnimator.reset();
         this.boulderAnimator.reset();
+
+        this.recalculate(true);
       }
     );
+
+    this.updatePosition();
   }
 
   fire() {
-    if (
-      this.armAnimator.playing ||
-      this.boulderAnimator.playing ||
-      (this.armAnimator.finished && this.boulderAnimator.finished)
-    ) {
-      this.boulderAnimatedValues = this.initialAnimationValues;
-      this.animatedValues = {};
+    this.armAnimator.play();
+  }
 
-      this.armAnimator.stop();
-      this.boulderAnimator.stop();
-    } else this.armAnimator.play();
+  updatePosition() {
+    const rotateCatapultX = myGUI.get("Rotate Catapult X");
+    const rotateCatapultY = myGUI.get("Rotate Catapult Y");
+
+    this.setTranslation([
+      25 * Math.cos(2 * Math.PI * rotateCatapultX),
+      0,
+      25 * Math.sin(2 * Math.PI * rotateCatapultX)
+    ]);
+
+    this.setRotation([
+      0,
+      rotateCatapultY + Math.PI / 2 - 2 * Math.PI * rotateCatapultX,
+      0
+    ]);
   }
 
   update() {
-    this.recalculate(true);
+    if (this.armAnimator.playing) this.recalculate(true);
+
+    if (this.boulderAnimator.playing) this.boulderNode.recalculate(true);
 
     this.armNode.rotX = -this.animatedValues.angle || 0;
 
@@ -409,11 +422,7 @@ class Catapult extends Node3D {
       ).setTranslation([0, 0, -1.5])
     );
 
-    this.boulderNode = new PointLight(
-      [0, 0, 0],
-      [0.1, 0.8, 0.0],
-      0.5
-    );
+    this.boulderNode = new PointLight([0, 0, 0], [0.1, 0.8, 0.0], 0.5, 0);
 
     armNode.addChildren(this.boulderNode);
 

@@ -1,5 +1,5 @@
 class Tower extends Node3D {
-  constructor(width, h) {
+  constructor(width, h, index) {
     super();
 
     const height = myGUI.get("Tower Height");
@@ -13,7 +13,7 @@ class Tower extends Node3D {
 
     this.model = this;
 
-    this.addChildren(new Torch([3.5, 2, 0]));
+    this.addChildren(new Torch([3.5, 2, 0], 0, index));
   }
 
   generateSurface() {
@@ -62,7 +62,7 @@ class Tower extends Node3D {
 }
 
 class Torch extends Node3D {
-  constructor(translation, rotation) {
+  constructor(translation, rotation, lightId) {
     super();
 
     this.m;
@@ -80,7 +80,9 @@ class Torch extends Node3D {
     mat4.rotateZ(stickTransform, stickTransform, -Math.PI / 4 + Math.PI);
 
     this.addChildren(
-      new PointLight([0, 0, 0], [0.0, 0.9, 0.0]).transform(lightTransform),
+      new PointLight([0, 0, 0], [0.0, 0.9, 0.0], 0.25, lightId).transform(
+        lightTransform
+      ),
       this.generateStick().transform(stickTransform)
     );
   }
@@ -107,7 +109,7 @@ class Torch extends Node3D {
 }
 
 class SpotTorch extends Node3D {
-  constructor(theta, translation, rotation = 0, invert, lightId) {
+  constructor(theta, translation, rotation = 0, lightId) {
     super();
 
     this.m;
@@ -123,14 +125,9 @@ class SpotTorch extends Node3D {
     mat4.rotateX(stickTransform, stickTransform, rotation + Math.PI);
 
     this.addChildren(
-      new SpotLight(
-        [0, 0, 0],
-        theta,
-        [0.0, 0.4, 0.0],
-        0.25,
-        invert,
-        lightId
-      ).transform(lightTransform),
+      new SpotLight([0, 0, 0], theta, [0.0, 0.4, 0.0], 0.25, lightId).transform(
+        lightTransform
+      ),
       this.generateStick().transform(stickTransform)
     );
   }

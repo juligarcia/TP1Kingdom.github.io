@@ -12,7 +12,9 @@ class Castle extends Node3D {
 
     const towers = new Array(this.numberOfTowers)
       .fill(0)
-      .map((_, index) => new Tower(towerWidth, H).setId(`tower-${index}`));
+      .map((_, index) =>
+        new Tower(towerWidth, H, index + 1).setId(`tower-${index}`)
+      );
 
     this.towers = towers;
 
@@ -45,81 +47,81 @@ class Castle extends Node3D {
 
     this.castleNode = new Node3D().addChildren(...towers, this.wallsNode, gate);
 
+    this.mainBuildingNode = new MainBuilding();
+
     this.addChildren(
       bridgeNode.setColor([172, 133, 62]),
       this.castleNode,
-      new MainBuilding(),
-      new SpotTorch(Math.PI / 2, [17, 2, 3]),
-      new SpotTorch(Math.PI / 2, [17, 2, -3])
+      this.mainBuildingNode,
+      new SpotTorch(Math.PI / 2, [17, 2, 3], 0, 0),
+      new SpotTorch(Math.PI / 2, [17, 2, -3], 0, 1)
     );
   }
 
   updateTowersHeight() {
     const newHeight = myGUI.get("Tower Height");
 
-    if (newHeight !== this.towerHeight) {
-      this.towerHeight = newHeight;
+    this.towerHeight = newHeight;
 
-      this.gateNode.recalculate(true);
+    this.gateNode.recalculate(true);
 
-      this.wallsNode.model.towerHeight = newHeight;
-      this.wallsNode.recalculate(true);
+    this.wallsNode.model.towerHeight = newHeight;
+    this.wallsNode.recalculate(true);
 
-      this.towers.forEach((tower) => {
-        tower.height = newHeight;
-        tower.recalculate(true);
-      });
-    }
+    this.towers.forEach((tower) => {
+      tower.height = newHeight;
+      tower.recalculate(true);
+    });
   }
 
   updateNumberOfTowers() {
     const newNum = myGUI.get("Number of Towers");
 
-    if (newNum !== this.numberOfTowers) {
-      for (let i = 0; i < this.numberOfTowers; i++)
-        this.castleNode.removeChild(`tower-${i}`);
+    for (let i = 0; i < this.numberOfTowers; i++)
+      this.castleNode.removeChild(`tower-${i}`);
 
-      this.numberOfTowers = newNum;
+    this.numberOfTowers = newNum;
 
-      this.gateNode.doorNode.numberOfTowers = newNum;
+    this.gateNode.doorNode.numberOfTowers = newNum;
+    this.gateNode.recalculate(true);
 
-      this.wallsNode.model.numberOfTowers = newNum;
+    this.wallsNode.model.numberOfTowers = newNum;
+    this.wallsNode.recalculate(true);
 
-      const towers = new Array(this.numberOfTowers)
-        .fill(0)
-        .map((_, index) =>
-          new Tower(this.towerWidth, H).setId(`tower-${index}`)
-        );
+    const towers = new Array(this.numberOfTowers)
+      .fill(0)
+      .map((_, index) =>
+        new Tower(this.towerWidth, H, index + 1).setId(`tower-${index}`)
+      );
 
-      this.towers = towers;
+    this.towers = towers;
 
-      towers.forEach((towerNode, i) => {
-        const totalTowers = towers.length;
-        const u = i / totalTowers;
+    towers.forEach((towerNode, i) => {
+      const totalTowers = towers.length;
+      const u = i / totalTowers;
 
-        const m = mat4.create();
+      const m = mat4.create();
 
-        mat4.rotateY(m, m, 2 * Math.PI * u - Math.PI / totalTowers);
-        mat4.translate(m, m, [this.distanceToTower, 0, 0]);
+      mat4.rotateY(m, m, 2 * Math.PI * u - Math.PI / totalTowers);
+      mat4.translate(m, m, [this.distanceToTower, 0, 0]);
 
-        towerNode.transform(m);
-      });
+      towerNode.transform(m);
+    });
 
-      this.castleNode.addChildren(...towers);
-
-      this.recalculate(true);
-    }
+    this.castleNode.addChildren(...towers);
   }
 
-  openGate(open) {
-    this.gateNode.openGate(open);
+  openGate() {
+    this.gateNode.openGate();
   }
 
-  liftBridge(lift) {
-    if ((this, this.bridgeNode.rotZ !== (lift * Math.PI) / 2)) {
-      this.bridgeNode.rotZ = (lift * Math.PI) / 2;
-      this.bridgeNode.recalculate(true);
-    }
+  liftBridge() {
+    this.bridgeNode.rotZ = (myGUI.get("Lift Bridge") * Math.PI) / 2;
+    this.bridgeNode.recalculate(true);
+  }
+
+  updateMainBuilding() {
+    this.mainBuildingNode.recalculate(true);
   }
 }
 
@@ -127,11 +129,30 @@ class MainBuilding extends Node3D {
   constructor() {
     super();
 
-    this.addChildren(this.building(), this.towers());
+    this.addChildren(
+      this.building().setId("building"),
+      this.towers().setId("towers")
+    );
+  }
+
+  preRender() {
+    super.preRender();
+
+    if (this.shouldRecalculate) {
+      this.removeChild("building");
+      this.removeChild("towers");
+
+      this.addChildren(
+        this.building().setId("building"),
+        this.towers().setId("towers")
+      );
+    }
   }
 
   building() {
     const buildingNode = new Node3D();
+
+    const height = myGUI.get("Castle Height");
 
     const buildingShapeCP = [
       [-2, -4, 0],
@@ -158,7 +179,7 @@ class MainBuilding extends Node3D {
     const buildingPathCP = [
       [0, 0, 0],
       [0, 0, 0],
-      [0, 7, 0]
+      [0, height, 0]
     ];
 
     const buildingShape = new JointBezier(3, buildingShapeCP, "xy").build(20);
@@ -200,8 +221,8 @@ class MainBuilding extends Node3D {
       new Node3D(new SweepSurface(roofShape, roofPath, true)).setMaterial(
         new RoofTile()
       ),
-      new SpotTorch(Math.PI / 3, [0, 3, -5], -Math.PI / 4),
-      new SpotTorch(Math.PI / 3, [0, 3, 5], Math.PI / 4)
+      new SpotTorch(Math.PI / 3, [0, 3, -5], -Math.PI / 4, 2),
+      new SpotTorch(Math.PI / 3, [0, 3, 5], Math.PI / 4, 3)
     );
 
     return buildingNode;
@@ -281,30 +302,10 @@ class MainBuilding extends Node3D {
     );
 
     towerNode.addChildren(
-      new SpotLight(
-        [0, 0, 0],
-        Math.PI / 3,
-        [1.0, 0.2, 0.0],
-        0.2
-      ).setTranslation([2, 12, -4]),
-      new SpotLight(
-        [0, 0, 0],
-        Math.PI / 3,
-        [1.0, 0.2, 0.0],
-        0.2
-      ).setTranslation([2, 12, 4]),
-      new SpotLight(
-        [0, 0, 0],
-        Math.PI / 3,
-        [1.0, 0.2, 0.0],
-        0.2
-      ).setTranslation([-2, 12, 4]),
-      new SpotLight(
-        [0, 0, 0],
-        Math.PI / 3,
-        [1.0, 0.2, 0.0],
-        0.2
-      ).setTranslation([-2, 12, -4])
+      new SpotLight([2, 12, -4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 4),
+      new SpotLight([2, 12, 4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 5),
+      new SpotLight([-2, 12, 4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 6),
+      new SpotLight([-2, 12, -4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 7)
     );
 
     return towerNode;
