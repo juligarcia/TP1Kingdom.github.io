@@ -103,7 +103,7 @@
             "Castle": [0, 5, 0],
         };
 
-        myGUI.bindChangeListener("Castle Height", () => {
+        myGUI.bindChangeListener(["Castle Height", "Castle Width", "Castle Depth"], () => {
             castleNode.updateMainBuilding();
         });
 
@@ -126,6 +126,7 @@
         });
 
         myGUI.bindChangeListener("Number of Towers", () => {
+            pointLightCount.setGLCount();
             castleNode.updateNumberOfTowers();
         });
 
@@ -312,6 +313,8 @@
 
             myGUI.addRange("Open Gate", 0, 0.5, 0, 0.01, "Castle");
             myGUI.addRange("Castle Height", 6, 10, 7, 1, "Castle");
+            myGUI.addRange("Castle Width", 4, 11, 8, 1, "Castle");
+            myGUI.addRange("Castle Depth", 3, 8, 4, 1, "Castle");
             myGUI.addRange("Rotate Catapult Y", -Math.PI / 4, Math.PI / 4, 0, 0.01, "Catapult");
             myGUI.addRange("Rotate Catapult X", 0, 1, 0, 0.01, "Catapult");
             myGUI.addRange("Lift Bridge", 0, 1, 0, 0.01, "Castle");

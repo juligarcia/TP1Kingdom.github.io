@@ -128,10 +128,10 @@ uniform vec3 observer;
 
 uniform DirectLight directLight;
 
-uniform PointLight pLights[10];
+uniform PointLight pLights[15];
 uniform int totalPLights;
 
-uniform SpotLight sLights[10];
+uniform SpotLight sLights[15];
 uniform int totalSLights;
 
 uniform Material material;

@@ -13,7 +13,9 @@ class LightCount {
   setGLCount() {
     const p = gl.getUniformLocation(shaderProgram, this.variableName);
 
-    gl.uniform1i(p, this.count);
+    console.log(this.count);
+
+    gl.uniform1i(p, this.count + 1);
   }
 }
 

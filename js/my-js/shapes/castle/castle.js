@@ -153,27 +153,29 @@ class MainBuilding extends Node3D {
     const buildingNode = new Node3D();
 
     const height = myGUI.get("Castle Height");
+    const width = myGUI.get("Castle Width");
+    const depth = myGUI.get("Castle Depth");
 
     const buildingShapeCP = [
-      [-2, -4, 0],
-      [-2, -4, 0],
-      [-2, 4, 0],
-      [-2, 4, 0],
+      [-depth / 2, -width / 2, 0],
+      [-depth / 2, -width / 2, 0],
+      [-depth / 2, width / 2, 0],
+      [-depth / 2, width / 2, 0],
 
-      [-2, 4, 0],
-      [-2, 4, 0],
-      [2, 4, 0],
-      [2, 4, 0],
+      [-depth / 2, width / 2, 0],
+      [-depth / 2, width / 2, 0],
+      [depth / 2, width / 2, 0],
+      [depth / 2, width / 2, 0],
 
-      [2, 4, 0],
-      [2, 4, 0],
-      [2, -4, 0],
-      [2, -4, 0],
+      [depth / 2, width / 2, 0],
+      [depth / 2, width / 2, 0],
+      [depth / 2, -width / 2, 0],
+      [depth / 2, -width / 2, 0],
 
-      [2, -4, 0],
-      [2, -4, 0],
-      [-2, -4, 0],
-      [-2, -4, 0]
+      [depth / 2, -width / 2, 0],
+      [depth / 2, -width / 2, 0],
+      [-depth / 2, -width / 2, 0],
+      [-depth / 2, -width / 2, 0]
     ];
 
     const buildingPathCP = [
@@ -192,26 +194,26 @@ class MainBuilding extends Node3D {
     );
 
     const roofShapeCP = [
-      [-2.2, 0, 0],
-      [-2.2, 0, 0],
+      [-depth / 2 - 0.2, 0, 0],
+      [-depth / 2 - 0.2, 0, 0],
       [0, 3, 0],
       [0, 3, 0],
 
       [0, 3, 0],
       [0, 3, 0],
-      [2.2, 0, 0],
-      [2.2, 0, 0],
+      [depth / 2 + 0.2, 0, 0],
+      [depth / 2 + 0.2, 0, 0],
 
-      [2.2, 0, 0],
-      [2.2, 0, 0],
-      [-2.2, 0, 0],
-      [-2.2, 0, 0]
+      [depth / 2 + 0.2, 0, 0],
+      [depth / 2 + 0.2, 0, 0],
+      [-depth / 2 - 0.2, 0, 0],
+      [-depth / 2 - 0.2, 0, 0]
     ];
 
     const roofPathCP = [
-      [0, 7, -4.2],
-      [0, 7, -4.2],
-      [0, 7, 4.2]
+      [0, height, -width / 2 - 0.2],
+      [0, height, -width / 2 - 0.2],
+      [0, height, width / 2 + 0.2]
     ];
 
     const roofShape = new JointBezier(3, roofShapeCP, "xy").build(20);
@@ -221,8 +223,8 @@ class MainBuilding extends Node3D {
       new Node3D(new SweepSurface(roofShape, roofPath, true)).setMaterial(
         new RoofTile()
       ),
-      new SpotTorch(Math.PI / 3, [0, 3, -5], -Math.PI / 4, 2),
-      new SpotTorch(Math.PI / 3, [0, 3, 5], Math.PI / 4, 3)
+      new SpotTorch(Math.PI / 3, [0, 3, -width / 2 - 1], -Math.PI / 4, 2),
+      new SpotTorch(Math.PI / 3, [0, 3, width / 2 + 1], Math.PI / 4, 3)
     );
 
     return buildingNode;
@@ -230,6 +232,10 @@ class MainBuilding extends Node3D {
 
   towers() {
     const towerNode = new Node3D();
+
+    const height = myGUI.get("Castle Height");
+    const width = myGUI.get("Castle Width");
+    const depth = myGUI.get("Castle Depth");
 
     const towerShapeCP = [
       [0, 0, 0],
@@ -239,18 +245,18 @@ class MainBuilding extends Node3D {
 
       [-0.5, 0, 0],
       [-0.5, 0, 0],
-      [-0.5, 5, 0],
-      [-0.5, 5, 0],
+      [-0.5, height, 0],
+      [-0.5, height - 1, 0],
 
-      [-0.5, 5, 0],
-      [-0.5, 6, 0],
-      [-1, 6, 0],
-      [-1, 8, 0],
+      [-0.5, height - 1, 0],
+      [-0.5, height - 1, 0],
+      [-1, height, 0],
+      [-1, height + 2, 0],
 
-      [-1, 8, 0],
-      [-1, 8, 0],
-      [0, 8, 0],
-      [0, 8, 0]
+      [-1, height + 2, 0],
+      [-1, height + 2, 0],
+      [0, height + 2, 0],
+      [0, height + 2, 0]
     ];
 
     const towerPath = new Circular().build(20);
@@ -259,16 +265,16 @@ class MainBuilding extends Node3D {
     towerNode.addChildren(
       new Node3D(new SweepSurface(towerShape, towerPath))
         .setMaterial(new Stone())
-        .setTranslation([2, 0, 4]),
+        .setTranslation([depth / 2, 0, width / 2]),
       new Node3D(new SweepSurface(towerShape, towerPath))
         .setMaterial(new Stone())
-        .setTranslation([-2, 0, 4]),
+        .setTranslation([-depth / 2, 0, width / 2]),
       new Node3D(new SweepSurface(towerShape, towerPath))
         .setMaterial(new Stone())
-        .setTranslation([-2, 0, -4]),
+        .setTranslation([-depth / 2, 0, -width / 2]),
       new Node3D(new SweepSurface(towerShape, towerPath))
         .setMaterial(new Stone())
-        .setTranslation([2, 0, -4])
+        .setTranslation([depth / 2, 0, -width / 2])
     );
 
     const towerRoofShapeCP = [
@@ -289,23 +295,47 @@ class MainBuilding extends Node3D {
     towerNode.addChildren(
       new Node3D(new SweepSurface(towerRoofShape, towerRoofPath))
         .setMaterial(new RoofTile())
-        .setTranslation([2, 8, 4]),
+        .setTranslation([depth / 2, height + 2, width / 2]),
       new Node3D(new SweepSurface(towerRoofShape, towerRoofPath))
         .setMaterial(new RoofTile())
-        .setTranslation([-2, 8, 4]),
+        .setTranslation([-depth / 2, height + 2, width / 2]),
       new Node3D(new SweepSurface(towerRoofShape, towerRoofPath))
         .setMaterial(new RoofTile())
-        .setTranslation([-2, 8, -4]),
+        .setTranslation([-depth / 2, height + 2, -width / 2]),
       new Node3D(new SweepSurface(towerRoofShape, towerRoofPath))
         .setMaterial(new RoofTile())
-        .setTranslation([2, 8, -4])
+        .setTranslation([depth / 2, height + 2, -width / 2])
     );
 
     towerNode.addChildren(
-      new SpotLight([2, 12, -4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 4),
-      new SpotLight([2, 12, 4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 5),
-      new SpotLight([-2, 12, 4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 6),
-      new SpotLight([-2, 12, -4], Math.PI / 4, [0.0, 0.35, 0.0], 0.2, 7)
+      new SpotLight(
+        [depth / 2, height + 6, -width / 2],
+        Math.PI / 4,
+        [0.0, 0.35, 0.0],
+        0.2,
+        4
+      ),
+      new SpotLight(
+        [depth / 2, height + 6, width / 2],
+        Math.PI / 4,
+        [0.0, 0.35, 0.0],
+        0.2,
+        5
+      ),
+      new SpotLight(
+        [-depth / 2, height + 6, width / 2],
+        Math.PI / 4,
+        [0.0, 0.35, 0.0],
+        0.2,
+        6
+      ),
+      new SpotLight(
+        [-depth / 2, height + 6, -width / 2],
+        Math.PI / 4,
+        [0.0, 0.35, 0.0],
+        0.2,
+        7
+      )
     );
 
     return towerNode;
