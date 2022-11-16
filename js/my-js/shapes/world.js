@@ -93,6 +93,20 @@ class Plane {
     return [normal[0], normal[1], normal[2]];
   }
 
+  getBinormal(u, v, m) {
+    const binormal = vec4.fromValues(1, 0, 0, 0);
+
+    vec4.transformMat4(binormal, binormal, m);
+    return [binormal[0], binormal[1], binormal[2]];
+  }
+
+  getTangent(u, v, m) {
+    const tangent = vec4.fromValues(0, 0, 1, 0);
+
+    vec4.transformMat4(tangent, tangent, m);
+    return [tangent[0], tangent[1], tangent[2]];
+  }
+
   getTextureCoordiantes(u, v) {
     return [u, v];
   }

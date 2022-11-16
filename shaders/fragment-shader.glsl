@@ -119,6 +119,9 @@ vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fr
 
 varying vec3 vNormal;
 varying vec3 vWorldPosition;
+varying vec2 vUv;    
+varying vec3 vBinormal;
+varying vec3 vTangent;      
 
 uniform bool isLightSource;
 uniform bool isSpotLight;
@@ -140,25 +143,30 @@ uniform bool showDirectLighting;
 uniform bool showPointLighting;
 uniform bool showSpotLighting;
 
+uniform bool useTextures;
 uniform bool useNormalMap;
 uniform bool useGrid;
 
+uniform sampler2D textureHandler;
+
 void main() {
+  vec3 textureFragment = vec3(texture2D(textureHandler, vec2(vUv.x * 5.0, vUv.y * 5.0))) - 0.5;
+
   vec3 normal = vNormal;
 
-  vec3 result;
+  if (useTextures) normal = vTangent * textureFragment.x + vNormal * textureFragment.z + vBinormal * textureFragment.y;
 
   if (useGrid) {
     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-
     return;
   }
 
   if (useNormalMap) {
-    result = normal * 0.5 + 0.5;
-    gl_FragColor = vec4(result, 1.0);
+    gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0);
     return;
   }
+
+  vec3 result;
 
   result = showDirectLighting ? calculateDirectLight(directLight, normal, material, vWorldPosition, observer) : vec3(0, 0, 0);
 

@@ -8,9 +8,41 @@ var LightingModeConfig = {
 };
 
 var RenderingModeConfig = {
-  Smooth: { lighting: true, normal: false, grid: false, smooth: true },
-  Polygons: { lighting: false, normal: false, grid: true, smooth: false },
-  "Normal Map": { lighting: false, normal: true, grid: false, smooth: true }
+  Smooth: {
+    lighting: true,
+    normal: false,
+    grid: false,
+    smooth: true,
+    textures: false
+  },
+  Textured: {
+    lighting: true,
+    normal: false,
+    grid: false,
+    smooth: true,
+    textures: true
+  },
+  "Textured Normal Map": {
+    lighting: false,
+    normal: true,
+    grid: false,
+    smooth: true,
+    textures: true
+  },
+  Polygons: {
+    lighting: false,
+    normal: false,
+    grid: true,
+    smooth: false,
+    textures: false
+  },
+  "Normal Map": {
+    lighting: false,
+    normal: true,
+    grid: false,
+    smooth: true,
+    textures: false
+  }
 };
 
 class GUI {

@@ -16,7 +16,7 @@ class Catapult extends Node3D {
     this.addChildren(
       new Node3D()
         .addChildren(...this.buildWheels())
-        .setMaterial(new Stone([217, 217, 217])),
+        .setMaterial(new Stone()),
       this.buildBase(),
       this.armNode
     );
@@ -470,6 +470,14 @@ class Sphere {
     vec3.normalize(normal, normal);
 
     return [normal[0], normal[1], normal[2]];
+  }
+
+  getBinormal(u, v, m) {
+    return [1, 0, 0];
+  }
+
+  getTangent(u, v, m) {
+    return [1, 0, 0];
   }
 
   getTextureCoordiantes(u, v) {

@@ -48,6 +48,7 @@
 </head>
 
 <body>
+    <img style="display: none;" id="water" src="./textures/water.png"></img>
     <canvas id="myCanvas">
         Your browser does not support the HTML5 canvas element.
     </canvas>
@@ -239,6 +240,12 @@
             shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aNormal");
             gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
+            shaderProgram.vertexBinormalAttribute = gl.getAttribLocation(shaderProgram, "aBinormal");
+            gl.enableVertexAttribArray(shaderProgram.vertexBinormalAttribute);
+
+            shaderProgram.vertexTangentAttribute = gl.getAttribLocation(shaderProgram, "aTangent");
+            gl.enableVertexAttribArray(shaderProgram.vertexTangentAttribute);
+
             // Variables usadas en el vertex shader ---------------------------
 
             shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
@@ -260,6 +267,7 @@
 
             shaderProgram.useGrid = gl.getUniformLocation(shaderProgram, "useGrid");
             shaderProgram.useNormalMap = gl.getUniformLocation(shaderProgram, "useNormalMap");
+            shaderProgram.useTextures = gl.getUniformLocation(shaderProgram, "useTextures");
         }
 
         function drawScene() {
@@ -269,7 +277,7 @@
 
             // Se habilita el color de borrado para la pantalla (Color Buffer) y otros buffers
 
-            gl.clearColor(0.2, 0.2, 0.2, 1);
+            gl.clearColor(0, 0.45, 0.6, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // Se configura la matriz de proyección
@@ -285,6 +293,7 @@
             gl.uniform1i(shaderProgram.showSpotLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")].spot);
 
             gl.uniform1i(shaderProgram.useNormalMap, !!RenderingModeConfig[myGUI.get("Rendering Mode")].normal);
+            gl.uniform1i(shaderProgram.useTextures, !!RenderingModeConfig[myGUI.get("Rendering Mode")].textures);
             gl.uniform1i(shaderProgram.useGrid, !!RenderingModeConfig[myGUI.get("Rendering Mode")].grid);
 
             viewMatrix = camera.buildLookAt(TARGETS[myGUI.get("Camera Target")]);
@@ -321,7 +330,7 @@
             myGUI.addRange("Tower Height", 3, 10, 6, 1, "Walls");
             myGUI.addRange("Number of Towers", 4, 8, 6, 1, "Walls");
 
-            myGUI.addSelect("Rendering Mode", ["Smooth", "Polygons", "Normal Map"], "Smooth", "Rendering");
+            myGUI.addSelect("Rendering Mode", ["Smooth", "Textured", "Polygons", "Normal Map", "Textured Normal Map"], "Smooth", "Rendering");
             myGUI.addSelect("Lighting Mode", ["All", "Direct", "Point", "Spot", "Point & Spot", "None"], "All", "Rendering");
             myGUI.addSelect("Camera Target", ["Castle", "Catapult"], "Castle", "Scene");
 
@@ -342,12 +351,27 @@
             return myGUI;
         }
 
+        function initTextures() {
+            var texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("water"));
+
+            gl.activeTexture(gl.TEXTURE0);
+            // gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+
         function webGLStart() {
             worldNode.addChildren(new DirectLight([-1, -0.5, 0]));
 
             var canvas = document.getElementById("myCanvas");
             initGL(canvas);
             initShaders();
+            initTextures();
 
             pointLightCount.setGLCount();
             spotLightCount.setGLCount();

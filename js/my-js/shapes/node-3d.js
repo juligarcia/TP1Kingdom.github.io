@@ -189,6 +189,8 @@ class Node3D {
 
     let positionBuffer = [];
     let normalBuffer = [];
+    let binormalBuffer = [];
+    let tangentBuffer = [];
     let uvBuffer = [];
 
     for (let i = 0; i <= rows; i++) {
@@ -198,12 +200,16 @@ class Node3D {
 
         positionBuffer.push(surface.getPosition(u, v, m));
         normalBuffer.push(surface.getNormal(u, v, m));
+        binormalBuffer.push(surface.getBinormal(u, v, m));
+        tangentBuffer.push(surface.getTangent(u, v, m));
         uvBuffer.push(surface.getTextureCoordiantes(u, v));
       }
     }
 
     positionBuffer = positionBuffer.flat();
     normalBuffer = normalBuffer.flat();
+    tangentBuffer = tangentBuffer.flat();
+    binormalBuffer = binormalBuffer.flat();
     uvBuffer = uvBuffer.flat();
 
     if (surface.closed) {
@@ -212,6 +218,8 @@ class Node3D {
 
       positionBuffer = [...startingLid[0], ...positionBuffer, ...endingLid[0]];
       normalBuffer = [...startingLid[1], ...normalBuffer, ...endingLid[1]];
+      binormalBuffer = [...startingLid[2], ...binormalBuffer, ...endingLid[2]];
+      tangentBuffer = [...startingLid[3], ...tangentBuffer, ...endingLid[3]];
 
       rows += 4;
 
@@ -292,6 +300,26 @@ class Node3D {
     webglNormalBuffer.itemSize = 3;
     webglNormalBuffer.numItems = normalBuffer.length / 3;
 
+    const webglBinormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, webglBinormalBuffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(binormalBuffer),
+      gl.STATIC_DRAW
+    );
+    webglBinormalBuffer.itemSize = 3;
+    webglBinormalBuffer.numItems = binormalBuffer.length / 3;
+
+    const webglTangentBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, webglTangentBuffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(tangentBuffer),
+      gl.STATIC_DRAW
+    );
+    webglTangentBuffer.itemSize = 3;
+    webglTangentBuffer.numItems = tangentBuffer.length / 3;
+
     const webglUvsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, webglUvsBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvBuffer), gl.STATIC_DRAW);
@@ -312,7 +340,9 @@ class Node3D {
       webglPositionBuffer,
       webglNormalBuffer,
       webglUvsBuffer,
-      webglIndexBuffer
+      webglIndexBuffer,
+      webglBinormalBuffer,
+      webglTangentBuffer
     };
 
     return this.buffers;
@@ -348,6 +378,26 @@ class Node3D {
     gl.vertexAttribPointer(
       shaderProgram.vertexNormalAttribute,
       mesh.webglNormalBuffer.itemSize,
+      gl.FLOAT,
+      false,
+      0,
+      0
+    );
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.webglBinormalBuffer);
+    gl.vertexAttribPointer(
+      shaderProgram.vertexBinormalAttribute,
+      mesh.webglBinormalBuffer.itemSize,
+      gl.FLOAT,
+      false,
+      0,
+      0
+    );
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.webglTangentBuffer);
+    gl.vertexAttribPointer(
+      shaderProgram.vertexTangentAttribute,
+      mesh.webglTangentBuffer.itemSize,
       gl.FLOAT,
       false,
       0,
@@ -406,8 +456,8 @@ class Material {
 }
 
 class Stone extends Material {
-  constructor(color = [217, 217, 217]) {
-    super(0.1, 0.5, 0.1, 1, color);
+  constructor() {
+    super(0.3, 0.7, 0.0, 0.1, [122, 122, 122]);
   }
 }
 
@@ -425,7 +475,7 @@ class Wood extends Material {
 
 class Water extends Material {
   constructor(color) {
-    super(0.1, 0.5, 0.5, 1.0, color);
+    super(0.1, 0.5, 0.5, 2.0, color);
   }
 }
 

@@ -7,7 +7,7 @@ class Castle extends Node3D {
     this.towerHeight = myGUI.get("Tower Height");
     this.numberOfTowers = myGUI.get("Number of Towers");
     this.towerWidth = towerWidth;
-    this.material = new Stone([217, 217, 217]);
+    this.material = new Stone();
     this.distanceToTower = distanceToTower;
 
     const towers = new Array(this.numberOfTowers)
@@ -190,7 +190,7 @@ class MainBuilding extends Node3D {
     buildingNode.addChildren(
       new Node3D(
         new SweepSurface(buildingShape, buildingPath, true)
-      ).setMaterial(new Stone([217, 217, 217]))
+      ).setMaterial(new Stone())
     );
 
     const roofShapeCP = [
