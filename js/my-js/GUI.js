@@ -74,6 +74,14 @@ class GUI {
   bindChangeListener(variables, callback) {
     if (Array.isArray(variables)) {
       variables.forEach((variable) =>
+        this.controllers[variable].onChange(callback)
+      );
+    } else this.controllers[variables].onChange(callback);
+  }
+
+  bindOnFinishChangeListener(variables, callback) {
+    if (Array.isArray(variables)) {
+      variables.forEach((variable) =>
         this.controllers[variable].onFinishChange(callback)
       );
     } else this.controllers[variables].onFinishChange(callback);
