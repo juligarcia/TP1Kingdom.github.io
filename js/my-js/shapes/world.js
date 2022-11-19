@@ -5,14 +5,14 @@ class World extends Node3D {
     const terrainTransform = mat4.create();
     mat4.rotateY(terrainTransform, terrainTransform, -Math.PI / 10);
 
-    this.setMaterial(new Grass([51, 204, 51]));
+    this.setMaterial(new Grass());
 
     this.addChildren(
-      new Node3D(this.buildCastleTerrain()),
+      new Node3D(this.buildCastleTerrain()).setMaterial(new CastleTerrain()),
       new Node3D(this.buildTerrain()).transform(terrainTransform),
       new Node3D(this.buildPitWater())
         .setTranslation([0, -1, 0])
-        .setMaterial(new Water([0, 153, 255]))
+        .setMaterial(new Water())
     );
   }
 
@@ -34,7 +34,7 @@ class World extends Node3D {
     const path = new Circular().build(50);
     const shape = new JointBezier(2, controlsPoints).build(50);
 
-    const shape3D = new SweepSurface(shape, path);
+    const shape3D = new SweepSurface(shape, path).setUVDensity(10, 10);
 
     return shape3D;
   }
@@ -61,7 +61,7 @@ class World extends Node3D {
     const path = new Circular().build(10);
     const shape = new JointBezier(2, controlsPoints).build(10);
 
-    const shape3D = new SweepSurface(shape, path);
+    const shape3D = new SweepSurface(shape, path).setUVDensity(10, 10);
 
     return shape3D;
   }
@@ -73,6 +73,8 @@ class Plane {
     this.depth = depth;
     this.levels = 20;
     this.pointsPerLevel = 20;
+    this.uDensity = 10;
+    this.vDensity = 10;
   }
 
   getPosition(u, v, m) {
@@ -108,6 +110,9 @@ class Plane {
   }
 
   getTextureCoordiantes(u, v) {
-    return [u, v];
+    const uu = u * this.uDensity;
+    const vv = v * this.vDensity;
+
+    return [vv, uu];
   }
 }

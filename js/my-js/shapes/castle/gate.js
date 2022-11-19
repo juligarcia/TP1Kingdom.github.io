@@ -102,7 +102,7 @@ class Door extends Node3D {
     super();
     this.h = h;
 
-    this.setMaterial(new Wood([172, 133, 62]));
+    this.setMaterial(new Wood());
 
     this.model = this;
   }
@@ -140,7 +140,10 @@ class Door extends Node3D {
 
     const shape = new JointBezier(3, shapeControlsPoints).build(20);
 
-    const shape3D = new SweepSurface(shape, path, true);
+    const shape3D = new SweepSurface(shape, path, true, "box").setUVDensity(
+      5,
+      5
+    );
 
     return shape3D;
   }
@@ -219,7 +222,10 @@ class GateWall extends Node3D {
 
     const shape = new JointBezier(2, shapeControlsPoints).build(20);
 
-    const shape3D = new SweepSurface(shape, path, true);
+    const shape3D = new SweepSurface(shape, path, true, "box").setUVDensity(
+      7,
+      7
+    );
 
     return shape3D;
   }

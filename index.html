@@ -48,7 +48,6 @@
 </head>
 
 <body>
-    <img style="display: none;" id="water" src="./textures/water.png"></img>
     <canvas id="myCanvas">
         Your browser does not support the HTML5 canvas element.
     </canvas>
@@ -59,20 +58,30 @@
         var vec3 = glMatrix.vec3;
         var vec4 = glMatrix.vec4;
 
+        var textures = {};
+        var textureFiles = [
+            "/textures/castle-wall-nm.jpg",
+            "/textures/castle-wall-t.jpg",
+            "/textures/stone-wall2-nm.jpg",
+            "/textures/stone-wall2-t.jpg",
+            "/textures/wood-nm.jpg",
+            "/textures/wood-t.jpg",
+            "/textures/grass-nm.jpg",
+            "/textures/grass-t.jpg",
+            "/textures/water-nm.jpg",
+            "/textures/water-t.jpg",
+            "/textures/grass2-nm.jpg",
+            "/textures/grass2-t.jpg",
+            "/textures/tiles-nm.jpg",
+            "/textures/tiles-t.jpg",
+        ];
         var myGUI = createMenu();
 
         var vertexShaderFile = "vertex-shader.glsl";
-        var modo = "smooth";
         var shaderProgram;
-
-
-        var earth;
 
         var $canvas = $("#myCanvas");
         var aspect = $canvas.width() / $canvas.height();
-
-        var lighting = "true";
-
 
         var vertexShaderSource;
         var fragmentShaderSource;
@@ -104,7 +113,7 @@
             "Castle": [0, 5, 0],
         };
 
-        myGUI.bindChangeListener(["Castle Height", "Castle Width", "Castle Depth"], () => {
+        myGUI.bindChangeListener(["Castle Floors", "Castle Width", "Castle Depth"], () => {
             castleNode.updateMainBuilding();
         });
 
@@ -267,6 +276,7 @@
 
             shaderProgram.useGrid = gl.getUniformLocation(shaderProgram, "useGrid");
             shaderProgram.useNormalMap = gl.getUniformLocation(shaderProgram, "useNormalMap");
+            shaderProgram.useNormalTextures = gl.getUniformLocation(shaderProgram, "useNormalTextures");
             shaderProgram.useTextures = gl.getUniformLocation(shaderProgram, "useTextures");
         }
 
@@ -277,7 +287,7 @@
 
             // Se habilita el color de borrado para la pantalla (Color Buffer) y otros buffers
 
-            gl.clearColor(0, 0.45, 0.6, 1);
+            gl.clearColor(...myGUI.getColor("Direct Light Ambient"), 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // Se configura la matriz de proyección
@@ -293,8 +303,9 @@
             gl.uniform1i(shaderProgram.showSpotLighting, !!LightingModeConfig[myGUI.get("Lighting Mode")].spot);
 
             gl.uniform1i(shaderProgram.useNormalMap, !!RenderingModeConfig[myGUI.get("Rendering Mode")].normal);
-            gl.uniform1i(shaderProgram.useTextures, !!RenderingModeConfig[myGUI.get("Rendering Mode")].textures);
+            gl.uniform1i(shaderProgram.useNormalTextures, !!RenderingModeConfig[myGUI.get("Rendering Mode")].normalTextures);
             gl.uniform1i(shaderProgram.useGrid, !!RenderingModeConfig[myGUI.get("Rendering Mode")].grid);
+            gl.uniform1i(shaderProgram.useTextures, !!RenderingModeConfig[myGUI.get("Rendering Mode")].textures);
 
             viewMatrix = camera.buildLookAt(TARGETS[myGUI.get("Camera Target")]);
 
@@ -321,7 +332,7 @@
             myGUI.addFolders(["Scene", "Castle", "Rendering", "Walls", "Catapult", , "Direct Light", "Point Lights", "Spot Lights"]);
 
             myGUI.addRange("Open Gate", 0, 0.5, 0, 0.01, "Castle");
-            myGUI.addRange("Castle Height", 6, 10, 7, 1, "Castle");
+            myGUI.addRange("Castle Floors", 2, 5, 3, 1, "Castle");
             myGUI.addRange("Castle Width", 4, 11, 8, 1, "Castle");
             myGUI.addRange("Castle Depth", 3, 8, 4, 1, "Castle");
             myGUI.addRange("Rotate Catapult Y", -Math.PI / 4, Math.PI / 4, 0, 0.01, "Catapult");
@@ -351,18 +362,29 @@
             return myGUI;
         }
 
-        function initTextures() {
-            var texture = gl.createTexture();
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        function initTexture(file) {
+            const texture = gl.createTexture();
+            texture.image = new Image();
 
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("water"));
+            textures[file] = texture;
 
-            gl.activeTexture(gl.TEXTURE0);
-            // gl.bindTexture(gl.TEXTURE_2D, null);
+            texture.image.onload = () => {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+                gl.generateMipmap(gl.TEXTURE_2D);
+                gl.bindTexture(gl.TEXTURE_2D, null);
+
+            };
+
+            texture.image.src = file;
         }
 
         function webGLStart() {
@@ -371,7 +393,8 @@
             var canvas = document.getElementById("myCanvas");
             initGL(canvas);
             initShaders();
-            initTextures();
+
+            textureFiles.forEach((file) => initTexture(file));
 
             pointLightCount.setGLCount();
             spotLightCount.setGLCount();

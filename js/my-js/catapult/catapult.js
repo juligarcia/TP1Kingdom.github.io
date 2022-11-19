@@ -2,7 +2,7 @@ class Catapult extends Node3D {
   constructor() {
     super();
 
-    this.setMaterial(new Wood([172, 133, 62]));
+    this.setMaterial(new Wood());
 
     this.width = 2;
     this.depth = 4;
@@ -14,9 +14,7 @@ class Catapult extends Node3D {
     this.armNode = this.buildArm().setTranslation([0, 2.5, 0]);
 
     this.addChildren(
-      new Node3D()
-        .addChildren(...this.buildWheels())
-        .setMaterial(new Stone()),
+      new Node3D().addChildren(...this.buildWheels()).setMaterial(new Stone()),
       this.buildBase(),
       this.armNode
     );
@@ -148,7 +146,7 @@ class Catapult extends Node3D {
 
     const shape = new JointBezier(3, shapeControlsPoints).build(20);
 
-    const base3D = new SweepSurface(shape, path, true);
+    const base3D = new SweepSurface(shape, path, true, "box");
     baseNode.addChildren(new Node3D(base3D));
 
     const supportShapeCP = [
@@ -184,7 +182,10 @@ class Catapult extends Node3D {
 
     const supports = new Array(2)
       .fill(0)
-      .map(() => new Node3D(new SweepSurface(supportShape, supportPath, true)));
+      .map(
+        () =>
+          new Node3D(new SweepSurface(supportShape, supportPath, true, "box"))
+      );
 
     supports[0].trX = -this.width / 3;
     supports[0].trY = this.wheelRadius + 0.2;
@@ -246,7 +247,7 @@ class Catapult extends Node3D {
     const weightPath = new Bezier(weightPathCP, "xy").build(20);
 
     const weigthNode = new Node3D(
-      new SweepSurface(weightShape, weightPath, true)
+      new SweepSurface(weightShape, weightPath, true, "box")
     )
       .setTranslation([0, -1, -1.5])
       .setColor([99, 100, 101]);
@@ -285,7 +286,7 @@ class Catapult extends Node3D {
     const supportWeightPath = new Bezier(supportPathCP, "xy").build(20);
 
     const supportNode = new Node3D(
-      new SweepSurface(supportShape, supportWeightPath, true)
+      new SweepSurface(supportShape, supportWeightPath, true, "box")
     ).setTranslation([0, -0.5, -1.5]);
 
     weight.addChildren(supportNode);

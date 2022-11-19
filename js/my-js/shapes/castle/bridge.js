@@ -37,7 +37,10 @@ class Bridge {
 
     const shape = new JointBezier(3, shapeControlsPoints).build(rows);
 
-    const shape3D = new SweepSurface(shape, path, true);
+    const shape3D = new SweepSurface(shape, path, true, "box").setUVDensity(
+      5,
+      5
+    );
 
     return shape3D;
   }

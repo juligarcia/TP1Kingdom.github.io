@@ -55,7 +55,7 @@ class Tower extends Node3D {
     const path = new Circular().build(20);
     const shape = new JointBezier(3, controlsPoints).build(20);
 
-    const shape3D = new SweepSurface(shape, path);
+    const shape3D = new SweepSurface(shape, path).setUVDensity(7, 7);
 
     return shape3D;
   }

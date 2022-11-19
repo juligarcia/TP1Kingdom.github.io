@@ -220,21 +220,9 @@ class Node3D {
       normalBuffer = [...startingLid[1], ...normalBuffer, ...endingLid[1]];
       binormalBuffer = [...startingLid[2], ...binormalBuffer, ...endingLid[2]];
       tangentBuffer = [...startingLid[3], ...tangentBuffer, ...endingLid[3]];
+      uvBuffer = [...startingLid[4], ...uvBuffer, ...endingLid[4]];
 
       rows += 4;
-
-      uvBuffer = [];
-
-      for (let i = 0; i <= rows; i++) {
-        for (let j = 0; j <= cols; j++) {
-          const u = j / cols;
-          const v = i / rows;
-
-          uvBuffer.push([u, v]);
-        }
-      }
-
-      uvBuffer = uvBuffer.flat();
     }
 
     let indexBuffer = [];
@@ -255,30 +243,6 @@ class Node3D {
     }
 
     indexBuffer = indexBuffer.flat();
-
-    // const webglPositionBuffer = this.glNode.createBuffer(
-    //   new Float32Array(positionBuffer),
-    //   gl.ARRAY_BUFFER,
-    //   3
-    // );
-
-    // const webglNormalBuffer = this.glNode.createBuffer(
-    //   new Float32Array(normalBuffer),
-    //   gl.ARRAY_BUFFER,
-    //   3
-    // );
-
-    // const webglUvsBuffer = this.glNode.createBuffer(
-    //   new Float32Array(uvBuffer),
-    //   gl.ARRAY_BUFFER,
-    //   2
-    // );
-
-    // const webglIndexBuffer = this.glNode.createBuffer(
-    //   new Uint16Array(indexBuffer),
-    //   gl.ELEMENT_ARRAY_BUFFER,
-    //   1
-    // );
 
     const webglPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, webglPositionBuffer);
@@ -409,7 +373,10 @@ class Node3D {
     if (!!RenderingModeConfig[myGUI.get("Rendering Mode")]?.smooth) {
       const material = this.getMaterial();
 
-      if (material) material.setGLColors(this.color);
+      if (material) {
+        material.setGLColors(this.color);
+        material.setTextures();
+      }
 
       gl.drawElements(
         gl.TRIANGLES,
@@ -431,12 +398,22 @@ class Node3D {
 }
 
 class Material {
-  constructor(ka, kd, ks, shininess, color) {
+  constructor({
+    ka = 0.0,
+    kd = 0.0,
+    ks = 0.0,
+    shininess = 1.0,
+    color = [0, 0, 0],
+    texture = null,
+    normalMap = null
+  }) {
     this.ka = ka;
     this.kd = kd;
     this.ks = ks;
     this.shininess = shininess;
     this.color = color;
+    this.texture = texture;
+    this.normalMap = normalMap;
   }
 
   normalizeColor(color) {
@@ -453,40 +430,136 @@ class Material {
       ...this.normalizeColor(replaceColor || this.color)
     );
   }
+
+  setTextures() {
+    const hasTextures = gl.getUniformLocation(shaderProgram, "hasTextures");
+
+    if (this.texture && this.normalMap) {
+      gl.uniform1i(hasTextures, 1);
+
+      const normalMapSampler = gl.getUniformLocation(
+        shaderProgram,
+        "normalMapSampler"
+      );
+
+      const textureSampler = gl.getUniformLocation(
+        shaderProgram,
+        "textureSampler"
+      );
+
+      gl.uniform1i(normalMapSampler, 0);
+      gl.uniform1i(textureSampler, 1);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, textures[this.normalMap]);
+
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, textures[this.texture]);
+      return;
+    }
+
+    gl.uniform1i(hasTextures, 0);
+  }
 }
 
 class Stone extends Material {
   constructor() {
-    super(0.3, 0.7, 0.0, 0.1, [122, 122, 122]);
+    super({
+      ka: 0.3,
+      kd: 0.7,
+      ks: 0.0,
+      shininess: 0.1,
+      color: [122, 122, 122],
+      texture: "/textures/stone-wall2-t.jpg",
+      normalMap: "/textures/stone-wall2-nm.jpg"
+    });
   }
 }
 
 class RoofTile extends Material {
   constructor() {
-    super(0.1, 0.7, 1.0, 1.5, [83, 83, 198]);
+    super({
+      ka: 0.1,
+      kd: 0.7,
+      ks: 1.0,
+      shininess: 1.5,
+      color: [83, 83, 198],
+      texture: "/textures/tiles-t.jpg",
+      normalMap: "/textures/tiles-nm.jpg"
+    });
   }
 }
 
 class Wood extends Material {
-  constructor(color) {
-    super(0.1, 0.7, 0.1, 0.1, color);
+  constructor() {
+    super({
+      ka: 0.1,
+      kd: 0.7,
+      ks: 0.1,
+      shininess: 0.1,
+      color: [172, 133, 62],
+      texture: "/textures/wood-t.jpg",
+      normalMap: "/textures/wood-nm.jpg"
+    });
   }
 }
 
 class Water extends Material {
-  constructor(color) {
-    super(0.1, 0.5, 0.5, 2.0, color);
+  constructor() {
+    super({
+      ka: 0.1,
+      kd: 0.5,
+      ks: 0.5,
+      shininess: 2.0,
+      color: [0, 153, 255],
+      texture: "/textures/water-t.jpg",
+      normalMap: "/textures/water-nm.jpg"
+    });
+  }
+}
+
+class Glass extends Material {
+  constructor() {
+    super({
+      ka: 0.5,
+      kd: 0.7,
+      ks: 0.7,
+      shininess: 2.0,
+      color: [184, 228, 242]
+    });
   }
 }
 
 class Grass extends Material {
-  constructor(color) {
-    super(0.1, 0.7, 0.0, 0.1, color);
+  constructor() {
+    super({
+      ka: 0.7,
+      kd: 0.7,
+      ks: 0.0,
+      shininess: 0.1,
+      color: [51, 204, 51],
+      texture: "/textures/grass2-t.jpg",
+      normalMap: "/textures/grass2-nm.jpg"
+    });
+  }
+}
+
+class CastleTerrain extends Material {
+  constructor() {
+    super({
+      ka: 0.7,
+      kd: 0.7,
+      ks: 0.0,
+      shininess: 0.1,
+      color: [51, 204, 51],
+      texture: "/textures/grass2-t.jpg",
+      normalMap: "/textures/grass2-nm.jpg"
+    });
   }
 }
 
 class LightEmiter extends Material {
   constructor(color) {
-    super(0.0, 100.0, 0.0, 100.0, color);
+    super({ ka: 0.0, kd: 100.0, ks: 0.0, shininess: 100.0, color });
   }
 }

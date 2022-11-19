@@ -1,12 +1,75 @@
+const getCylindricalTextureCoordiantes = (ref, u, v) => {
+  const [x, y, z] = ref.getPosition(u, v, mat4.create());
+  const [xN, yN, zN] = ref
+    .getNormal(u, v, mat4.create())
+    .map((i) => Math.abs(i));
+
+  const isPlain = yN === 1;
+
+  if (!isPlain) {
+    const arcAngle = Math.abs(vec3.angle([x, 0, 0], [x, 0, z]));
+
+    const arc = arcAngle * Math.sqrt(x * x + z * z);
+
+    return [arc / ref.uDensity, y / ref.vDensity];
+  }
+
+  return [x / ref.uDensity, z / ref.vDensity];
+};
+
+const getBoxTextureCoordinates = (ref, u, v) => {
+  const [x, y, z] = ref.getPosition(u, v, mat4.create());
+
+  const [xN, yN, zN] = ref
+    .getNormal(u, v, mat4.create())
+    .map((i) => Math.abs(i));
+
+  const isPlain = yN === 1;
+
+  const uCoord = zN > xN ? x : z;
+
+  if (!isPlain) return [uCoord / ref.uDensity, y / ref.vDensity];
+
+  return [x / ref.uDensity, z / ref.vDensity];
+};
+
+const getBoxTextureCoordinatesFromPoint = (ref, point, normal) => {
+  const [x, y, z] = point;
+
+  const [xN, yN, zN] = normal.map((i) => Math.abs(i));
+
+  const isPlain = yN === 1;
+
+  if (!isPlain) return [x / ref.uDensity, y / ref.vDensity];
+
+  return [x / ref.uDensity, z / ref.vDensity];
+};
+
+const mappers = {
+  cylindrical: getCylindricalTextureCoordiantes,
+  box: getBoxTextureCoordinates
+};
+
 class SweepSurface {
-  constructor(shape, path, closed) {
+  constructor(shape, path, closed, type = "cylindrical") {
     this.shape = shape;
     this.pointsPerLevel = shape.length - 1;
 
     this.path = path;
     this.levels = path.length - 1;
 
+    this.uDensity = 1;
+    this.vDensity = 1;
+
     this.closed = closed;
+    this.type = type;
+  }
+
+  setUVDensity(uDensity, vDensity) {
+    this.uDensity = uDensity;
+    this.vDensity = vDensity;
+
+    return this;
   }
 
   getStartingLid(cols, m) {
@@ -51,11 +114,19 @@ class SweepSurface {
       .fill(0)
       .map(() => [...vec3.fromValues(...binormal)]);
 
+    const allPoints = [...points, ...shape];
+    const allNormals = [...normals, ...normals];
+
+    const uv = allPoints.map((point, index) =>
+      getBoxTextureCoordinatesFromPoint(this, point, allNormals[index])
+    );
+
     return [
-      [...points.flat(), ...shape.flat()],
-      [...normals.flat(), ...normals.flat()],
+      allPoints.flat(),
+      allNormals.flat(),
       [...binormals.flat(), ...binormals.flat()],
-      [...tangents.flat(), ...tangents.flat()]
+      [...tangents.flat(), ...tangents.flat()],
+      uv.flat()
     ];
   }
 
@@ -97,11 +168,19 @@ class SweepSurface {
       .fill(0)
       .map(() => [...vec3.fromValues(...normal)]);
 
+    const allPoints = [...shape, ...points];
+    const allNormals = [...normals, ...normals];
+
+    const uv = allPoints.map((point, index) =>
+      getBoxTextureCoordinatesFromPoint(this, point, allNormals[index])
+    );
+
     return [
-      [...shape.flat(), ...points.flat()],
-      [...normals.flat(), ...normals.flat()],
+      allPoints.flat(),
+      allNormals.flat(),
       [...binormals.flat(), ...binormals.flat()],
-      [...tangents.flat(), ...tangents.flat()]
+      [...tangents.flat(), ...tangents.flat()],
+      uv.flat()
     ];
   }
 
@@ -233,6 +312,8 @@ class SweepSurface {
   }
 
   getTextureCoordiantes(u, v) {
-    return [u, v];
+    const uv = mappers[this.type](this, u, v);
+
+    return uv;
   }
 }

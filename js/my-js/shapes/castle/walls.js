@@ -10,7 +10,6 @@ class Walls {
 
   generateSurface() {
     const height = this.towerHeight - 3 * this.h;
-    const numberOfWalls = myGUI.get("Number of Towers") - 1;
 
     const shapeControlsPoints = [
       [-this.width, 0, 0],
@@ -93,7 +92,7 @@ class Walls {
 
     const shape = new JointBezier(2, shapeControlsPoints).build(20);
 
-    const shape3D = new SweepSurface(shape, path);
+    const shape3D = new SweepSurface(shape, path).setUVDensity(7, 7);
 
     return shape3D;
   }

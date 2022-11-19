@@ -13,6 +13,7 @@ var RenderingModeConfig = {
     normal: false,
     grid: false,
     smooth: true,
+    normalTextures: false,
     textures: false
   },
   Textured: {
@@ -20,6 +21,7 @@ var RenderingModeConfig = {
     normal: false,
     grid: false,
     smooth: true,
+    normalTextures: true,
     textures: true
   },
   "Textured Normal Map": {
@@ -27,20 +29,22 @@ var RenderingModeConfig = {
     normal: true,
     grid: false,
     smooth: true,
-    textures: true
+    normalTextures: true,
+    textures: false
   },
   Polygons: {
     lighting: false,
     normal: false,
     grid: true,
     smooth: false,
-    textures: false
+    normalTextures: false
   },
   "Normal Map": {
     lighting: false,
     normal: true,
     grid: false,
     smooth: true,
+    normalTextures: false,
     textures: false
   }
 };

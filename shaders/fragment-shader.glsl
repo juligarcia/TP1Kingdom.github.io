@@ -36,7 +36,7 @@ struct Material {
   vec3 color;
 };
 
-vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer) {
+vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, vec3 texColor) {
   vec3 N = normalize(normal);
   vec3 L = normalize(-light.direction);
 
@@ -54,16 +54,16 @@ vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec
   vec3 diffuse  = light.diffuse * lambertian * material.kd;
   vec3 specular = spec * light.specular * material.ks;
 
-  return (ambient + diffuse + specular) * material.color;
+  return (ambient + diffuse + specular) * texColor;
 }
 
-vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource, bool isPointLight) {
+vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource, bool isPointLight, vec3 texColor) {
   if (isLightSource && !isPointLight) {
     return vec3(0, 0, 0);
   }
 
   if (isLightSource) {
-    return material.kd * light.diffuse * material.color;
+    return material.kd * light.diffuse * texColor;
   }
 
   vec3 N = normalize(normal);
@@ -87,16 +87,16 @@ vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 
     material.ka * light.ambient +
     material.kd * lambertian * light.diffuse +
     material.ks * specular * light.specular
-  ) * material.color;
+  ) * texColor;
 }
 
-vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource, bool isSpotLight) {
+vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fragmentPosition, vec3 observer, bool isLightSource, bool isSpotLight, vec3 texColor) {
   if (isLightSource && !isSpotLight) {
     return vec3(0, 0, 0);
   }
 
   if (isLightSource) {
-    return material.kd * light.diffuse * material.color;
+    return material.kd * light.diffuse * texColor;
   }
 
   vec3 lightToPixel = normalize(fragmentPosition - light.position);
@@ -105,11 +105,11 @@ vec3 calculateSpotLight(SpotLight light, vec3 normal, Material material, vec3 fr
   if (spot >= cos(light.theta)) {
     PointLight auxLight = PointLight(light.position, light.coefs, light.ambient, light.specular, light.diffuse);
 
-    vec3 color = calculatePointLight(auxLight, normal, material, fragmentPosition, observer, isLightSource, false);
+    vec3 color = calculatePointLight(auxLight, normal, material, fragmentPosition, observer, isLightSource, false, texColor);
 
     float factor = (1.0 - (1.0 - spot) / (1.0 - cos(light.theta)));
 
-    return factor * color * material.color;
+    return factor * color * texColor;
   }
 
   return vec3(0, 0, 0);
@@ -143,18 +143,23 @@ uniform bool showDirectLighting;
 uniform bool showPointLighting;
 uniform bool showSpotLighting;
 
+uniform bool useNormalTextures;
 uniform bool useTextures;
 uniform bool useNormalMap;
 uniform bool useGrid;
 
-uniform sampler2D textureHandler;
+uniform bool hasTextures;
+
+uniform sampler2D normalMapSampler;
+uniform sampler2D textureSampler;
 
 void main() {
-  vec3 textureFragment = vec3(texture2D(textureHandler, vec2(vUv.x * 5.0, vUv.y * 5.0))) - 0.5;
+  vec3 normalMapRGB = texture2D(normalMapSampler, vec2(vUv.x, vUv.y)).rgb * 2.0 - 1.0;
+  vec3 texColor = useTextures && hasTextures ? vec3(texture2D(textureSampler, vec2(vUv.x, vUv.y)).rgb): material.color;
 
   vec3 normal = vNormal;
 
-  if (useTextures) normal = vTangent * textureFragment.x + vNormal * textureFragment.z + vBinormal * textureFragment.y;
+  if (useNormalTextures && hasTextures) normal = vTangent * normalMapRGB.x + vNormal * normalMapRGB.z + vBinormal * normalMapRGB.y;
 
   if (useGrid) {
     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
@@ -168,18 +173,18 @@ void main() {
 
   vec3 result;
 
-  result = showDirectLighting ? calculateDirectLight(directLight, normal, material, vWorldPosition, observer) : vec3(0, 0, 0);
+  result = showDirectLighting ? calculateDirectLight(directLight, normal, material, vWorldPosition, observer, texColor) : vec3(0, 0, 0);
 
   if (showPointLighting) {
     for (int i = 0; i < 10; i++) {
-      if(i < totalPLights) result += calculatePointLight(pLights[i], normal, material, vWorldPosition, observer, isLightSource, isPointLight);
+      if(i < totalPLights) result += calculatePointLight(pLights[i], normal, material, vWorldPosition, observer, isLightSource, isPointLight, texColor);
       else break;
     }
   }
 
   if (showSpotLighting) {
     for (int i = 0; i < 10; i++) {
-      if(i < totalSLights) result += calculateSpotLight(sLights[i], normal, material, vWorldPosition, observer, isLightSource, isSpotLight);
+      if(i < totalSLights) result += calculateSpotLight(sLights[i], normal, material, vWorldPosition, observer, isLightSource, isSpotLight, texColor);
       else break;
     }
   }

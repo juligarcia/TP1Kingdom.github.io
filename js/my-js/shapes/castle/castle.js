@@ -1,4 +1,48 @@
 const H = 0.5;
+const FLOOR_HEIGHT = 2.5;
+const WINDOW_PAD = 0.1;
+const WINDOW_WIDTH = 0.5;
+const WINDOW_HEIGHT = 0.7;
+const FLOOR_PAD = 1;
+
+class Window extends Node3D {
+  constructor() {
+    super();
+
+    this.model = this;
+    this.setMaterial(new Glass());
+  }
+
+  generateSurface() {
+    const shapeCP = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [-WINDOW_WIDTH / 2, 0, 0],
+      [-WINDOW_WIDTH / 2, 0, 0],
+
+      [-WINDOW_WIDTH / 2, 0, 0],
+      [-WINDOW_WIDTH / 2, WINDOW_HEIGHT, 0],
+      [WINDOW_WIDTH / 2, WINDOW_HEIGHT, 0],
+      [WINDOW_WIDTH / 2, 0, 0],
+
+      [WINDOW_WIDTH / 2, 0, 0],
+      [WINDOW_WIDTH / 2, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0]
+    ];
+
+    const pathCP = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0.05, 0, 0]
+    ];
+
+    const windowShape = new JointBezier(3, shapeCP, "xy").build(20);
+    const windowPath = new Bezier(pathCP, "xz").build(20);
+
+    return new SweepSurface(windowShape, windowPath, true);
+  }
+}
 
 class Castle extends Node3D {
   constructor(towerWidth, distanceToTower) {
@@ -50,11 +94,11 @@ class Castle extends Node3D {
     this.mainBuildingNode = new MainBuilding();
 
     this.addChildren(
-      bridgeNode.setColor([172, 133, 62]),
+      bridgeNode.setMaterial(new Wood()),
       this.castleNode,
       this.mainBuildingNode,
-      new SpotTorch(Math.PI / 2, [17, 2, 3], 0, 0),
-      new SpotTorch(Math.PI / 2, [17, 2, -3], 0, 1)
+      new SpotTorch(Math.PI / 2, [17, 3, 3], 0, 0).setTranslation([0, -1, 0]),
+      new SpotTorch(Math.PI / 2, [17, 3, -3], 0, 1).setTranslation([0, -1, 0])
     );
   }
 
@@ -152,7 +196,9 @@ class MainBuilding extends Node3D {
   building() {
     const buildingNode = new Node3D();
 
-    const height = myGUI.get("Castle Height");
+    const floors = myGUI.get("Castle Floors");
+    const height = FLOOR_HEIGHT * floors;
+
     const width = myGUI.get("Castle Width");
     const depth = myGUI.get("Castle Depth");
 
@@ -189,7 +235,10 @@ class MainBuilding extends Node3D {
 
     buildingNode.addChildren(
       new Node3D(
-        new SweepSurface(buildingShape, buildingPath, true)
+        new SweepSurface(buildingShape, buildingPath, true, "box").setUVDensity(
+          7,
+          7
+        )
       ).setMaterial(new Stone())
     );
 
@@ -220,20 +269,112 @@ class MainBuilding extends Node3D {
     const roofPath = new Bezier(roofPathCP, "xz").build(20);
 
     buildingNode.addChildren(
-      new Node3D(new SweepSurface(roofShape, roofPath, true)).setMaterial(
-        new RoofTile()
-      ),
+      new Node3D(
+        new SweepSurface(roofShape, roofPath, true, "box")
+      ).setMaterial(new RoofTile()),
       new SpotTorch(Math.PI / 3, [0, 3, -width / 2 - 1], -Math.PI / 4, 2),
       new SpotTorch(Math.PI / 3, [0, 3, width / 2 + 1], Math.PI / 4, 3)
     );
 
-    return buildingNode;
+    const totalWindowWidth = WINDOW_WIDTH + 2 * WINDOW_PAD;
+
+    const windowsFronts = Math.floor(
+      (width - FLOOR_PAD * 2) / totalWindowWidth
+    );
+    const leftOverSpaceFront = (width - FLOOR_PAD * 2) % totalWindowWidth;
+
+    const leftOverSpaceSide = (depth - FLOOR_PAD * 2) % totalWindowWidth;
+
+    const windowsSides = Math.floor((depth - FLOOR_PAD * 2) / totalWindowWidth);
+
+    const frontWindows = Array(floors)
+      .fill(0)
+      .map((_, floorIndex) => {
+        return Array(windowsFronts)
+          .fill(0)
+          .map((_, index) =>
+            new Window().setTranslation([
+              depth / 2,
+              floorIndex * FLOOR_HEIGHT + FLOOR_HEIGHT / 2,
+              index * totalWindowWidth -
+                (width / 2 - FLOOR_PAD) +
+                leftOverSpaceFront
+            ])
+          );
+      })
+      .flat();
+
+    const backWindows = Array(floors)
+      .fill(0)
+      .map((_, floorIndex) => {
+        return Array(windowsFronts)
+          .fill(0)
+          .map((_, index) =>
+            new Window()
+              .setRotation([0, Math.PI, 0])
+              .setTranslation([
+                -depth / 2,
+                floorIndex * FLOOR_HEIGHT + FLOOR_HEIGHT / 2,
+                index * totalWindowWidth -
+                  (width / 2 - FLOOR_PAD) +
+                  leftOverSpaceFront
+              ])
+          );
+      })
+      .flat();
+
+    const rightWindows = Array(floors)
+      .fill(0)
+      .map((_, floorIndex) => {
+        return Array(windowsSides)
+          .fill(0)
+          .map((_, index) =>
+            new Window()
+              .setRotation([0, -Math.PI / 2, 0])
+              .setTranslation([
+                index * totalWindowWidth -
+                  (depth / 2 - FLOOR_PAD) +
+                  leftOverSpaceSide,
+                floorIndex * FLOOR_HEIGHT + FLOOR_HEIGHT / 2,
+                width / 2
+              ])
+          );
+      })
+      .flat();
+
+    const leftWindows = Array(floors)
+      .fill(0)
+      .map((_, floorIndex) => {
+        return Array(windowsSides)
+          .fill(0)
+          .map((_, index) =>
+            new Window()
+              .setRotation([0, Math.PI / 2, 0])
+              .setTranslation([
+                index * totalWindowWidth -
+                  (depth / 2 - FLOOR_PAD) +
+                  leftOverSpaceSide,
+                floorIndex * FLOOR_HEIGHT + FLOOR_HEIGHT / 2,
+                -width / 2
+              ])
+          );
+      })
+      .flat();
+
+    return buildingNode.addChildren(
+      ...frontWindows,
+      ...backWindows,
+      ...rightWindows,
+      ...leftWindows
+    );
   }
 
   towers() {
     const towerNode = new Node3D();
 
-    const height = myGUI.get("Castle Height");
+    const floors = myGUI.get("Castle Floors");
+    const height = FLOOR_HEIGHT * floors;
+
     const width = myGUI.get("Castle Width");
     const depth = myGUI.get("Castle Depth");
 
@@ -263,16 +404,16 @@ class MainBuilding extends Node3D {
     const towerShape = new JointBezier(3, towerShapeCP, "xy").build(20);
 
     towerNode.addChildren(
-      new Node3D(new SweepSurface(towerShape, towerPath))
+      new Node3D(new SweepSurface(towerShape, towerPath).setUVDensity(7, 7))
         .setMaterial(new Stone())
         .setTranslation([depth / 2, 0, width / 2]),
-      new Node3D(new SweepSurface(towerShape, towerPath))
+      new Node3D(new SweepSurface(towerShape, towerPath).setUVDensity(7, 7))
         .setMaterial(new Stone())
         .setTranslation([-depth / 2, 0, width / 2]),
-      new Node3D(new SweepSurface(towerShape, towerPath))
+      new Node3D(new SweepSurface(towerShape, towerPath).setUVDensity(7, 7))
         .setMaterial(new Stone())
         .setTranslation([-depth / 2, 0, -width / 2]),
-      new Node3D(new SweepSurface(towerShape, towerPath))
+      new Node3D(new SweepSurface(towerShape, towerPath).setUVDensity(7, 7))
         .setMaterial(new Stone())
         .setTranslation([depth / 2, 0, -width / 2])
     );
