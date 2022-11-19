@@ -14,7 +14,10 @@ class Catapult extends Node3D {
     this.armNode = this.buildArm().setTranslation([0, 2.5, 0]);
 
     this.addChildren(
-      new Node3D().addChildren(...this.buildWheels()).setMaterial(new Stone()),
+      new Node3D()
+        .addChildren(...this.buildWheels())
+        .setMaterial(new Stone())
+        .setId("wheels"),
       this.buildBase(),
       this.armNode
     );
@@ -94,7 +97,10 @@ class Catapult extends Node3D {
   }
 
   update() {
-    if (this.armAnimator.playing) this.recalculate(true);
+    if (this.armAnimator.playing) {
+      this.armNode.recalculate(true);
+      this.boulderNode.recalculate(true);
+    }
 
     if (this.boulderAnimator.playing) this.boulderNode.recalculate(true);
 
@@ -209,11 +215,11 @@ class Catapult extends Node3D {
       new Node3D(new SweepSurface(supportAxisShape, supportAxisPath, true))
     );
 
-    return baseNode;
+    return baseNode.setId("base");
   }
 
   buildCounterWeight() {
-    const weight = new Node3D();
+    const weight = new Node3D().setId("c-weight");
 
     const weightShapeCP = [
       [-0.25, -0.25, 0],
@@ -250,7 +256,8 @@ class Catapult extends Node3D {
       new SweepSurface(weightShape, weightPath, true, "box")
     )
       .setTranslation([0, -1, -1.5])
-      .setColor([99, 100, 101]);
+      .setColor([99, 100, 101])
+      .setId("weight");
 
     weight.addChildren(weigthNode);
 
@@ -287,7 +294,9 @@ class Catapult extends Node3D {
 
     const supportNode = new Node3D(
       new SweepSurface(supportShape, supportWeightPath, true, "box")
-    ).setTranslation([0, -0.5, -1.5]);
+    )
+      .setTranslation([0, -0.5, -1.5])
+      .setId("support-w");
 
     weight.addChildren(supportNode);
 
@@ -307,7 +316,9 @@ class Catapult extends Node3D {
 
     const wheels = new Array(4)
       .fill(0)
-      .map(() => new Node3D(new SweepSurface(shape, path, true)));
+      .map((_, i) =>
+        new Node3D(new SweepSurface(shape, path, true)).setId(`wheel-${i}`)
+      );
 
     wheels[0].trX = -this.width / 2 - this.wheelWidth / 2;
     wheels[0].trZ = this.depth / 2;
@@ -337,7 +348,11 @@ class Catapult extends Node3D {
 
     const wheelAxis = new Array(2)
       .fill(0)
-      .map(() => new Node3D(new SweepSurface(axisShape, axisPath, true)));
+      .map((_, i) =>
+        new Node3D(new SweepSurface(axisShape, axisPath, true)).setId(
+          `axis-${i}`
+        )
+      );
 
     wheelAxis[0].trZ = this.depth / 2;
 
@@ -381,9 +396,9 @@ class Catapult extends Node3D {
     const supportPath = new Bezier(supportPathCP, "xz").build(20);
 
     armNode.addChildren(
-      new Node3D(
-        new SweepSurface(supportShape, supportPath, true)
-      ).setTranslation([0, 0, -1.5])
+      new Node3D(new SweepSurface(supportShape, supportPath, true))
+        .setTranslation([0, 0, -1.5])
+        .setId("support")
     );
 
     const paddleShapeCP = [
@@ -418,18 +433,20 @@ class Catapult extends Node3D {
     const paddlePath = new Bezier(paddlePathCP, "xz").build(20);
 
     armNode.addChildren(
-      new Node3D(
-        new SweepSurface(paddleShape, paddlePath, true)
-      ).setTranslation([0, 0, -1.5])
+      new Node3D(new SweepSurface(paddleShape, paddlePath, true))
+        .setTranslation([0, 0, -1.5])
+        .setId("paddle")
     );
 
-    this.boulderNode = new PointLight([0, 0, 0], [0.1, 0.8, 0.0], 0.5, 0);
+    this.boulderNode = new PointLight([0, 0, 0], [0.1, 0.8, 0.0], 0.5, 0).setId(
+      "boulder"
+    );
 
     armNode.addChildren(this.boulderNode);
 
     this.counterWeight = this.buildCounterWeight();
 
-    armNode.addChildren(this.counterWeight);
+    armNode.addChildren(this.counterWeight).setId("arm");
 
     return armNode;
   }

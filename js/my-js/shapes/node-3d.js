@@ -26,13 +26,9 @@ class Node3D {
   }
 
   preRender() {
-    const ls = gl.getUniformLocation(shaderProgram, "isLightSource");
-    const spot = gl.getUniformLocation(shaderProgram, "isSpotLight");
-    const point = gl.getUniformLocation(shaderProgram, "isPointLight");
-
-    gl.uniform1i(ls, this.isLightSource);
-    gl.uniform1i(spot, this.lightType === "spot");
-    gl.uniform1i(point, this.lightType === "point");
+    gl.uniform1i(shaderProgram.isLightSource, this.isLightSource);
+    gl.uniform1i(shaderProgram.isSpotLight, this.lightType === "spot");
+    gl.uniform1i(shaderProgram.isPointLight, this.lightType === "point");
   }
 
   setColor(RGB) {
@@ -432,23 +428,11 @@ class Material {
   }
 
   setTextures() {
-    const hasTextures = gl.getUniformLocation(shaderProgram, "hasTextures");
-
     if (this.texture && this.normalMap) {
-      gl.uniform1i(hasTextures, 1);
+      gl.uniform1i(shaderProgram.hasTextures, 1);
 
-      const normalMapSampler = gl.getUniformLocation(
-        shaderProgram,
-        "normalMapSampler"
-      );
-
-      const textureSampler = gl.getUniformLocation(
-        shaderProgram,
-        "textureSampler"
-      );
-
-      gl.uniform1i(normalMapSampler, 0);
-      gl.uniform1i(textureSampler, 1);
+      gl.uniform1i(shaderProgram.normalMapSampler, 0);
+      gl.uniform1i(shaderProgram.textureSampler, 1);
 
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, textures[this.normalMap]);
@@ -458,7 +442,7 @@ class Material {
       return;
     }
 
-    gl.uniform1i(hasTextures, 0);
+    gl.uniform1i(shaderProgram.hasTextures, 0);
   }
 }
 

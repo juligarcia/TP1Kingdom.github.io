@@ -91,7 +91,8 @@
         var pointLightCount = new LightCount("totalPLights");
         var spotLightCount = new LightCount("totalSLights");
 
-        const camera = new DragCamera();
+        // const camera = new DragCamera();
+        var camera = new DragCamera();
 
         const worldNode = new World();
 
@@ -115,6 +116,15 @@
 
         myGUI.bindChangeListener(["Castle Floors", "Castle Width", "Castle Depth"], () => {
             castleNode.updateMainBuilding();
+        });
+
+        myGUI.bindChangeListener("Camera Target", () => {
+            document.exitPointerLock();
+
+            if (myGUI.get("Camera Target") === "First Person")
+                camera = new FirstPersonCamera();
+
+            else camera = new DragCamera();
         });
 
         myGUI.bindChangeListener([
@@ -278,6 +288,23 @@
             shaderProgram.useNormalMap = gl.getUniformLocation(shaderProgram, "useNormalMap");
             shaderProgram.useNormalTextures = gl.getUniformLocation(shaderProgram, "useNormalTextures");
             shaderProgram.useTextures = gl.getUniformLocation(shaderProgram, "useTextures");
+
+            shaderProgram.normalMapSampler = gl.getUniformLocation(
+                shaderProgram,
+                "normalMapSampler"
+            );
+
+            shaderProgram.textureSampler = gl.getUniformLocation(
+                shaderProgram,
+                "textureSampler"
+            );
+
+            shaderProgram.hasTextures = gl.getUniformLocation(shaderProgram, "hasTextures");
+
+            shaderProgram.isLightSource = gl.getUniformLocation(shaderProgram, "isLightSource");
+            shaderProgram.isSpotLight = gl.getUniformLocation(shaderProgram, "isSpotLight");
+            shaderProgram.isPointLight = gl.getUniformLocation(shaderProgram, "isPointLight");
+
         }
 
         function drawScene() {
@@ -319,8 +346,8 @@
             requestAnimationFrame(tick);
 
             catapultNode.update();
-
             camera.update();
+
             gl.uniform3f(shaderProgram.observer, ...camera.getObserver());
 
             drawScene();
@@ -343,7 +370,7 @@
 
             myGUI.addSelect("Rendering Mode", ["Smooth", "Textured", "Polygons", "Normal Map", "Textured Normal Map"], "Smooth", "Rendering");
             myGUI.addSelect("Lighting Mode", ["All", "Direct", "Point", "Spot", "Point & Spot", "None"], "All", "Rendering");
-            myGUI.addSelect("Camera Target", ["Castle", "Catapult"], "Castle", "Scene");
+            myGUI.addSelect("Camera Target", ["Castle", "Catapult", "First Person"], "Castle", "Scene");
 
             myGUI.addColorPicker("Direct Light Ambient", [0, 115, 153], "Direct Light");
             myGUI.addColorPicker("Direct Light Diffuse", [232, 198, 138], "Direct Light");
@@ -357,7 +384,7 @@
             myGUI.addColorPicker("Spot Light Diffuse", [255, 210, 139], "Spot Lights");
             myGUI.addColorPicker("Spot Light Specular", [255, 255, 255], "Spot Lights");
 
-            myGUI.addKeyboardListener("Camera Target", [{ key: "1", value: "Castle" }, { key: "2", value: "Catapult" }]);
+            myGUI.addKeyboardListener("Camera Target", [{ key: "1", value: "Castle" }, { key: "2", value: "Catapult" }, { key: "3", value: "First Person" }]);
 
             return myGUI;
         }

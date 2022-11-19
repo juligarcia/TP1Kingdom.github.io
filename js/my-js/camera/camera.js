@@ -126,3 +126,105 @@ class DragCamera {
     return view;
   }
 }
+
+class FirstPersonCamera {
+  constructor() {
+    this.direction = vec3.fromValues(-1, 0, 0);
+    this.speed = 0.1;
+    this.keyState = { w: false, s: false, d: false, a: false };
+    this.position = vec3.fromValues(30, 1.5, 0);
+    this.mouse = vec3.create();
+
+    this.canvas = document.getElementById("myCanvas");
+    this.canvas.requestPointerLock();
+
+    window.addEventListener("keydown", ({ key }) => {
+      if (key === "w" || key === "W")
+        this.keyState = { ...this.keyState, w: true };
+
+      if (key === "s" || key === "S")
+        this.keyState = { ...this.keyState, s: true };
+
+      if (key === "d" || key === "D")
+        this.keyState = { ...this.keyState, d: true };
+
+      if (key === "a" || key === "A")
+        this.keyState = { ...this.keyState, a: true };
+    });
+
+    window.addEventListener("keyup", ({ key }) => {
+      if (key === "w" || key === "W")
+        this.keyState = { ...this.keyState, w: false };
+
+      if (key === "s" || key === "S")
+        this.keyState = { ...this.keyState, s: false };
+
+      if (key === "d" || key === "D")
+        this.keyState = { ...this.keyState, d: false };
+
+      if (key === "a" || key === "A")
+        this.keyState = { ...this.keyState, a: false };
+    });
+
+    window.addEventListener("mousemove", ({ movementX: x, movementY: y }) => {
+      const [mX, mY] = this.mouse;
+
+      this.mouse = vec3.fromValues(mX + x, mY + y, 0);
+    });
+  }
+
+  getObserver() {
+    return this.position;
+  }
+
+  update() {
+    const r = 200;
+
+    const dir = vec3.fromValues(1, 0, 0);
+
+    const rotationAngleX = (this.mouse[0] % (r * 2 * Math.PI)) / r;
+    const rotationAngleY = (this.mouse[1] % (r * 2 * Math.PI)) / r;
+
+    vec3.rotateZ(dir, dir, [0, 0, 0], rotationAngleY);
+    vec3.rotateY(dir, dir, [0, 0, 0], rotationAngleX);
+
+    let forwardScale = 0;
+    forwardScale += this.keyState.w ? -1 : 0;
+    forwardScale += this.keyState.s ? 1 : 0;
+
+    const forwardMovement = forwardScale * this.speed;
+
+    let strafeScale = 0;
+    strafeScale += this.keyState.d ? 1 : 0;
+    strafeScale += this.keyState.a ? -1 : 0;
+
+    const strafeMovement = strafeScale * this.speed;
+
+    const deltaPosition = vec3.fromValues(forwardMovement, 0, strafeMovement);
+
+    const angleX = vec3.angle(dir, [1, 0, 0]);
+    const angleSign = dir[2] >= 0 ? -1 : 1;
+
+    vec3.rotateY(deltaPosition, deltaPosition, [0, 0, 0], angleX * angleSign);
+
+    vec3.add(this.position, this.position, deltaPosition);
+
+    this.direction = dir;
+  }
+
+  buildLookAt() {
+    const view = mat4.create();
+
+    const eye = vec3.fromValues(...this.position);
+
+    const target = vec3.create();
+
+    vec3.add(target, target, this.position);
+
+    vec3.sub(target, target, this.direction);
+
+    mat4.lookAt(view, eye, target, vec3.fromValues(0, 1, 0));
+
+    return view;
+  }
+}

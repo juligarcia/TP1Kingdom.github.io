@@ -74,9 +74,9 @@ class GUI {
   bindChangeListener(variables, callback) {
     if (Array.isArray(variables)) {
       variables.forEach((variable) =>
-        this.controllers[variable].onChange(callback)
+        this.controllers[variable].onFinishChange(callback)
       );
-    } else this.controllers[variables].onChange(callback);
+    } else this.controllers[variables].onFinishChange(callback);
   }
 
   addKeyboardListener(variable, options) {
@@ -85,9 +85,8 @@ class GUI {
       (e) => {
         const selectedOption = options.find(({ key }) => key === e.key);
 
-        if (selectedOption) {
-          this.values[variable] = selectedOption.value;
-        }
+        if (selectedOption)
+          this.controllers[variable].setValue(selectedOption.value);
       },
       { passive: true }
     );
