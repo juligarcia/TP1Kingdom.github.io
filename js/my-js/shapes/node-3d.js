@@ -466,7 +466,7 @@ class RoofTile extends Material {
       ka: 0.1,
       kd: 0.7,
       ks: 1.0,
-      shininess: 1.5,
+      shininess: 15.0,
       color: [83, 83, 198],
       texture: "/textures/tiles-t.jpg",
       normalMap: "/textures/tiles-nm.jpg"
@@ -479,7 +479,7 @@ class Wood extends Material {
     super({
       ka: 0.1,
       kd: 0.7,
-      ks: 0.1,
+      ks: 0.0,
       shininess: 0.1,
       color: [172, 133, 62],
       texture: "/textures/wood-t.jpg",
@@ -493,8 +493,8 @@ class Water extends Material {
     super({
       ka: 0.1,
       kd: 0.5,
-      ks: 0.5,
-      shininess: 2.0,
+      ks: 1.0,
+      shininess: 32.0,
       color: [0, 153, 255],
       texture: "/textures/water-t.jpg",
       normalMap: "/textures/water-nm.jpg"
@@ -505,10 +505,10 @@ class Water extends Material {
 class Glass extends Material {
   constructor() {
     super({
-      ka: 0.5,
-      kd: 0.7,
-      ks: 0.7,
-      shininess: 2.0,
+      ka: 0.3,
+      kd: 0.5,
+      ks: 1.0,
+      shininess: 32.0,
       color: [184, 228, 242]
     });
   }

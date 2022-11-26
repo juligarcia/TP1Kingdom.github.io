@@ -43,12 +43,12 @@ vec3 calculateDirectLight(DirectLight light, vec3 normal, Material material, vec
   float lambertian = max(dot(N, L), 0.0);
   float spec = 0.0;
 
-  if(lambertian > 0.0) {
+  // if(lambertian > 0.0) {
     vec3 R = reflect(-L, N);
-    vec3 V = normalize(-observer);
+    vec3 V = normalize(observer);
     float specAngle = max(dot(V, R), 0.0);
     spec = pow(specAngle, material.shininess);
-  }
+  // }
 
   vec3 ambient  = light.ambient  * material.ka;
   vec3 diffuse  = light.diffuse * lambertian * material.kd;
@@ -78,8 +78,8 @@ vec3 calculatePointLight(PointLight light, vec3 normal, Material material, vec3 
 
   if(lambertian > 0.0) {
     vec3 R = reflect(-L, N);
-    vec3 V = normalize(-observer);
-    float specAngle = max(dot(V, R), 0.0);
+    vec3 V = normalize(observer);
+    float specAngle = max(dot(R, V), 0.0);
     specular = pow(specAngle, material.shininess);
   }
 
@@ -159,7 +159,7 @@ void main() {
 
   vec3 normal = vNormal;
 
-  if (useNormalTextures && hasTextures) normal = vTangent * normalMapRGB.x + vNormal * normalMapRGB.z + vBinormal * normalMapRGB.y;
+  if (useNormalTextures && hasTextures) normal = vTangent * normalMapRGB.x+ vNormal * normalMapRGB.z + vBinormal * normalMapRGB.y;
 
   if (useGrid) {
     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);

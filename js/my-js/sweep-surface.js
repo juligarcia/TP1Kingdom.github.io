@@ -7,9 +7,10 @@ const getCylindricalTextureCoordiantes = (ref, u, v) => {
   const isPlain = yN === 1;
 
   if (!isPlain) {
-    const arcAngle = Math.abs(vec3.angle([x, 0, 0], [x, 0, z]));
+    const angleSign = z >= 0 ? -1 : 1;
+    const arcAngle = Math.max(Math.abs(vec3.angle([1, 0, 0], [x, 0, z])), 0);
 
-    const arc = arcAngle * Math.sqrt(x * x + z * z);
+    const arc = angleSign * arcAngle * Math.sqrt(x * x + z * z);
 
     return [arc / ref.uDensity, y / ref.vDensity];
   }
